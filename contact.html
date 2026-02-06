@@ -92,7 +92,10 @@
         <div class="contact-form">
           <h2>Send Us a Message</h2>
           <p>Fill out the form below and one of our cloud specialists will get back to you within one business day.</p>
-          <form id="contact-form" action="https://formspree.io/f/xpwzgkby" method="POST">
+          <form id="contact-form" action="https://api.web3forms.com/submit" method="POST">
+            <input type="hidden" name="access_key" value="mojnqjdk">
+            <input type="hidden" name="subject" value="New Contact Form Submission - ApexStack">
+            <input type="hidden" name="from_name" value="ApexStack Website">
             <div class="form-row">
               <div class="form-group">
                 <label for="first-name">First Name</label>

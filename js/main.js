@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ---- Contact form (Formspree) ----
+  // ---- Contact form (Web3Forms) ----
   const contactForm = document.getElementById('contact-form');
   contactForm?.addEventListener('submit', function (e) {
     e.preventDefault();
@@ -133,24 +133,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     fetch(form.action, {
       method: form.method,
-      body: new FormData(form),
-      headers: { 'Accept': 'application/json' }
+      body: new FormData(form)
     }).then(function (response) {
-      if (response.ok) {
+      return response.json();
+    }).then(function (data) {
+      if (data.success) {
         status.textContent = 'Thank you! Your message has been sent. We will get back to you within 24 hours.';
         status.style.display = 'block';
         status.style.color = '#0fd4b4';
         form.reset();
       } else {
-        return response.json().then(function (data) {
-          if (data.errors) {
-            status.textContent = data.errors.map(function (err) { return err.message; }).join(', ');
-          } else {
-            status.textContent = 'Something went wrong. Please try again.';
-          }
-          status.style.display = 'block';
-          status.style.color = '#e63946';
-        });
+        status.textContent = data.message || 'Something went wrong. Please try again.';
+        status.style.display = 'block';
+        status.style.color = '#e63946';
       }
     }).catch(function () {
       status.textContent = 'Something went wrong. Please try again.';
