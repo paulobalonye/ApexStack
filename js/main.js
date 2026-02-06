@@ -121,12 +121,45 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ---- Contact form ----
-  const contactForm = document.querySelector('.contact-form');
+  // ---- Contact form (Formspree) ----
+  const contactForm = document.getElementById('contact-form');
   contactForm?.addEventListener('submit', function (e) {
     e.preventDefault();
-    alert('Thank you for your message! Our team will get back to you within 24 hours.');
-    this.reset();
+    const form = this;
+    const status = document.getElementById('form-status');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'SENDING...';
+
+    fetch(form.action, {
+      method: form.method,
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    }).then(function (response) {
+      if (response.ok) {
+        status.textContent = 'Thank you! Your message has been sent. We will get back to you within 24 hours.';
+        status.style.display = 'block';
+        status.style.color = '#0fd4b4';
+        form.reset();
+      } else {
+        return response.json().then(function (data) {
+          if (data.errors) {
+            status.textContent = data.errors.map(function (err) { return err.message; }).join(', ');
+          } else {
+            status.textContent = 'Something went wrong. Please try again.';
+          }
+          status.style.display = 'block';
+          status.style.color = '#e63946';
+        });
+      }
+    }).catch(function () {
+      status.textContent = 'Something went wrong. Please try again.';
+      status.style.display = 'block';
+      status.style.color = '#e63946';
+    }).finally(function () {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'SEND MESSAGE';
+    });
   });
 
   // ---- Set active nav link based on current page ----
