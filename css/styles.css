@@ -698,6 +698,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
+  max-width: 100% !important;
 }
 
 .hero-slide-center {
@@ -758,17 +759,35 @@ h1, h2, h3, h4, h5, h6 {
 .hero-slide--services h1 .dot { color: var(--accent-cyan); }
 
 /* ---- Slide 3: Managed (split layout with feature cards) ---- */
+.hero-slide--managed {
+  max-width: 100% !important;
+}
+
 .hero-slide--managed h1 .dot { color: var(--accent-teal); }
 
 .hero-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 3rem;
+  gap: 4rem;
   align-items: center;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .hero-split-left {
-  max-width: 520px;
+  max-width: 560px;
+}
+
+.hero-split-left h1 {
+  font-size: clamp(2rem, 4vw, 3.25rem);
+}
+
+.hero-split-left .hero-text {
+  max-width: 100%;
+}
+
+.hero-split-left .hero-buttons {
+  flex-wrap: nowrap;
 }
 
 .hero-split-right {
@@ -820,6 +839,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ---- Slide 4: Global (centered with location cards) ---- */
+.hero-slide--global {
+  max-width: 100% !important;
+}
+
 .hero-slide--global h1 .dot { color: #ffc107; }
 
 .hero-globe-icon {
