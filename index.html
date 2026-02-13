@@ -7,7 +7,7 @@
   <meta name="description" content="ApexStack delivers enterprise cloud engineering, migration, managed services, and digital transformation powered by multi-cloud certified teams.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -22,9 +22,6 @@
 
       <nav class="nav-menu">
         <div class="nav-item">
-          <a href="index.html" class="nav-link active">Home</a>
-        </div>
-        <div class="nav-item">
           <a href="services.html" class="nav-link">Services <span class="nav-chevron">&#9660;</span></a>
           <div class="dropdown">
             <a href="services.html#cloud-strategy" class="dropdown-link">Cloud Strategy</a>
@@ -33,16 +30,6 @@
             <a href="services.html#managed" class="dropdown-link">Managed Services</a>
           </div>
         </div>
-        <!-- Partners nav hidden
-        <div class="nav-item">
-          <a href="partners.html" class="nav-link">Partners <span class="nav-chevron">&#9660;</span></a>
-          <div class="dropdown">
-            <a href="partners.html#aws" class="dropdown-link">Amazon Web Services</a>
-            <a href="partners.html#azure" class="dropdown-link">Microsoft Azure</a>
-            <a href="partners.html#gcp" class="dropdown-link">Google Cloud</a>
-          </div>
-        </div>
-        -->
         <div class="nav-item">
           <a href="industries.html" class="nav-link">Industries <span class="nav-chevron">&#9660;</span></a>
           <div class="dropdown">
@@ -52,31 +39,21 @@
             <a href="industries.html#retail" class="dropdown-link">Retail &amp; E-Commerce</a>
           </div>
         </div>
-        <!-- Content Hub nav hidden
         <div class="nav-item">
-          <a href="blog.html" class="nav-link">Content Hub <span class="nav-chevron">&#9660;</span></a>
-          <div class="dropdown">
-            <a href="blog.html" class="dropdown-link">Blog &amp; Articles</a>
-            <a href="blog.html#whitepapers" class="dropdown-link">Whitepapers</a>
-            <a href="blog.html#webinars" class="dropdown-link">Webinars</a>
-          </div>
+          <a href="about.html" class="nav-link">Company</a>
         </div>
-        -->
-        <!-- Case Studies nav hidden
-        <div class="nav-item">
-          <a href="case-studies.html" class="nav-link">Case Studies</a>
-        </div>
-        -->
         <div class="nav-item">
           <a href="careers.html" class="nav-link">Careers</a>
         </div>
         <div class="nav-item">
-          <a href="about.html" class="nav-link">About Us</a>
+          <a href="contact.html" class="nav-link">Contact</a>
         </div>
       </nav>
 
       <div class="header-actions">
-        <a href="contact.html" class="btn btn-primary" style="padding: 0.625rem 1.5rem; font-size: 0.875rem;">CONTACT US</a>
+        <a href="contact.html" class="nav-link header-link-signin">Sign in</a>
+        <a href="services.html" class="btn btn-header-dark">Docs</a>
+        <a href="contact.html" class="btn btn-header-outline">Get started</a>
         <button class="mobile-toggle" aria-label="Toggle menu">
           <span></span><span></span><span></span>
         </button>
@@ -84,309 +61,319 @@
     </div>
   </header>
 
-  <!-- ======== HERO SLIDER ======== -->
+  <!-- ======== HERO ======== -->
   <section class="hero">
-    <div class="hero-bg">
-      <div class="meteor"></div>
-      <div class="meteor"></div>
-      <div class="meteor"></div>
-      <div class="meteor"></div>
-    </div>
-
-    <div class="hero-planet">
-      <div class="planet-sphere"></div>
-      <div class="planet-ring"></div>
-      <div class="orbit-dot"></div>
-      <div class="orbit-dot"></div>
-    </div>
-
-    <!-- Slide 1: Cloud Platforms - Left-aligned with badge row -->
-    <div class="container hero-content hero-slide hero-slide--platforms active" data-slide="0">
-      <div class="hero-badges">
-        <div class="hero-badge">
-          <span class="hero-badge-icon">&#9729;</span>
-          <span class="hero-badge-text">AWS</span>
+    <div class="container hero-container">
+      <div class="hero-left">
+        <h1>Enterprise Cloud<br>Engineering. Scalable<br>and Servers Optional.</h1>
+        <p class="hero-subtitle">Ensure seamless cloud integration with resilient connectivity, empowering operations to perform independently while keeping cloud and server usage optional.</p>
+        <div class="hero-buttons">
+          <a href="contact.html" class="btn btn-primary">Get started</a>
+          <a href="services.html" class="btn btn-outline-dark">Learn more</a>
         </div>
-        <div class="hero-badge">
-          <span class="hero-badge-icon">&#9670;</span>
-          <span class="hero-badge-text">Azure</span>
-        </div>
-        <div class="hero-badge">
-          <span class="hero-badge-icon">&#9678;</span>
-          <span class="hero-badge-text">GCP</span>
+
+        <!-- Bottom partnership card -->
+        <div class="hero-partner-card">
+          <div class="hero-partner-logos">
+            <span class="partner-icon-a">A</span>
+            <span class="partner-icon-x">&times;</span>
+            <span class="partner-icon-n">N</span>
+          </div>
+          <div class="hero-partner-text">
+            <span class="hero-partner-title">The Future of Scalable Edge</span>
+            <span class="hero-partner-desc">Network Infrastructure</span>
+          </div>
         </div>
       </div>
-      <h1>Accelerate your cloud transformation with our elite engineering teams<span class="dot">.</span></h1>
-      <p class="hero-text">From strategy to execution, ApexStack delivers end-to-end cloud solutions with multi-certified architects, engineers, and DevOps specialists.</p>
-      <div class="hero-buttons">
-        <a href="contact.html" class="btn btn-primary">BOOK A CONSULTATION</a>
-        <a href="about.html" class="btn btn-outline-white">ABOUT US</a>
-      </div>
-    </div>
 
-    <!-- Slide 2: Services - Centered with stat highlights -->
-    <div class="container hero-content hero-slide hero-slide--services" data-slide="1">
-      <div class="hero-slide-center">
-        <p class="hero-label">OUR SERVICES</p>
-        <h1>Migrate, modernize, and scale with confidence<span class="dot">.</span></h1>
-        <p class="hero-text">We help organizations move to the cloud seamlessly, re-architect legacy applications, and build scalable infrastructure that grows with your business.</p>
-        <div class="hero-stat-row">
-          <div class="hero-stat">
-            <span class="hero-stat-number">99.9%</span>
-            <span class="hero-stat-label">Uptime SLA</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hero-stat-number">60%</span>
-            <span class="hero-stat-label">Cost Reduction</span>
-          </div>
-          <div class="hero-stat">
-            <span class="hero-stat-number">3x</span>
-            <span class="hero-stat-label">Faster Deployment</span>
-          </div>
-        </div>
-        <div class="hero-buttons" style="justify-content: center;">
-          <a href="services.html" class="btn btn-primary">EXPLORE SERVICES</a>
-          <a href="contact.html" class="btn btn-outline-white">GET STARTED</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 3: Managed Services - Left content with feature cards on right -->
-    <div class="container hero-content hero-slide hero-slide--managed" data-slide="2">
-      <div class="hero-split">
-        <div class="hero-split-left">
-          <p class="hero-label">24/7 MANAGED SERVICES</p>
-          <h1>Secure, reliable cloud operations around the clock<span class="dot">.</span></h1>
-          <p class="hero-text">Our managed services team monitors, optimizes, and secures your cloud environment so you can focus on innovation instead of infrastructure.</p>
-          <div class="hero-buttons">
-            <a href="services.html#managed" class="btn btn-primary">MANAGED SERVICES</a>
-            <a href="contact.html" class="btn btn-outline-white">TALK TO US</a>
-          </div>
-        </div>
-        <div class="hero-split-right">
-          <div class="hero-feature-card">
-            <span class="hero-feature-icon">&#128274;</span>
-            <div>
-              <strong>Security</strong>
-              <p>Threat detection &amp; compliance</p>
+      <div class="hero-right">
+        <!-- Dashboard Mockup -->
+        <div class="dashboard-mockup">
+          <div class="dashboard-sidebar">
+            <div class="dash-sidebar-brand">
+              <span class="dash-brand-icon">A</span>
+              <span class="dash-brand-name">ApexStack</span>
+            </div>
+            <div class="dash-search">
+              <span class="dash-search-icon">&#128269;</span>
+              <span>Search services...</span>
+            </div>
+            <nav class="dash-nav">
+              <a class="dash-nav-item active">
+                <span class="dash-nav-icon">&#127968;</span> Home
+              </a>
+              <a class="dash-nav-item">
+                <span class="dash-nav-icon">&#9729;</span> Cloud Services
+              </a>
+              <a class="dash-nav-item">
+                <span class="dash-nav-icon">&#128190;</span> Deployments
+              </a>
+              <a class="dash-nav-item">
+                <span class="dash-nav-icon">&#128274;</span> Security
+              </a>
+              <a class="dash-nav-item">
+                <span class="dash-nav-icon">&#128202;</span> Analytics
+              </a>
+              <a class="dash-nav-item">
+                <span class="dash-nav-icon">&#128176;</span> FinOps
+              </a>
+              <a class="dash-nav-item">
+                <span class="dash-nav-icon">&#9881;</span> Settings
+              </a>
+            </nav>
+            <div class="dash-storage">
+              <div class="dash-storage-icon">&#128451;</div>
+              <div class="dash-storage-info">
+                <span>Storage</span>
+                <div class="dash-storage-bar">
+                  <div class="dash-storage-fill"></div>
+                </div>
+                <span class="dash-storage-text">62.4 TB of 100 TB Used</span>
+              </div>
             </div>
           </div>
-          <div class="hero-feature-card">
-            <span class="hero-feature-icon">&#9881;</span>
-            <div>
-              <strong>DevOps</strong>
-              <p>CI/CD &amp; automation pipelines</p>
+          <div class="dashboard-main">
+            <div class="dash-welcome">
+              <h3>Welcome back, Admin</h3>
+              <p>Let's continue your activity on the dashboard</p>
+            </div>
+            <div class="dash-stats-row">
+              <div class="dash-stat-card">
+                <span class="dash-stat-label">Active Instances</span>
+                <span class="dash-stat-value">247</span>
+              </div>
+              <div class="dash-stat-card">
+                <span class="dash-stat-label">Uptime</span>
+                <span class="dash-stat-value">99.97%</span>
+              </div>
+              <div class="dash-stat-card">
+                <span class="dash-stat-label">Cost Savings</span>
+                <span class="dash-stat-value">$42.8K</span>
+              </div>
+            </div>
+            <div class="dash-recent">
+              <h4>Recent Deployments</h4>
+              <div class="dash-table">
+                <div class="dash-table-row dash-table-header">
+                  <span>Service Name</span>
+                  <span>Status</span>
+                  <span>Region</span>
+                </div>
+                <div class="dash-table-row">
+                  <span>api-gateway-prod</span>
+                  <span class="dash-status-live">Live</span>
+                  <span>eu-west-1</span>
+                </div>
+                <div class="dash-table-row">
+                  <span>auth-service-v2</span>
+                  <span class="dash-status-live">Live</span>
+                  <span>us-east-1</span>
+                </div>
+                <div class="dash-table-row">
+                  <span>data-pipeline</span>
+                  <span class="dash-status-deploying">Deploying</span>
+                  <span>af-south-1</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="hero-feature-card">
-            <span class="hero-feature-icon">&#128202;</span>
-            <div>
-              <strong>Monitoring</strong>
-              <p>Real-time observability &amp; alerts</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slide 4: Global Reach - Centered with location highlights -->
-    <div class="container hero-content hero-slide hero-slide--global" data-slide="3">
-      <div class="hero-slide-center">
-        <div class="hero-globe-icon">&#127757;</div>
-        <h1>Cloud expertise with a global reach<span class="dot">.</span></h1>
-        <p class="hero-text">With teams across Africa and Europe, ApexStack brings world-class cloud engineering to enterprises wherever they operate.</p>
-        <div class="hero-locations">
-          <div class="hero-location">
-            <span class="hero-location-flag">&#127475;&#127468;</span>
-            <div>
-              <strong>Nigeria</strong>
-              <span>African Headquarters</span>
-            </div>
-          </div>
-          <div class="hero-location-line"></div>
-          <div class="hero-location">
-            <span class="hero-location-flag">&#127465;&#127466;</span>
-            <div>
-              <strong>Berlin</strong>
-              <span>European Engineering Hub</span>
-            </div>
-          </div>
-        </div>
-        <div class="hero-buttons" style="justify-content: center;">
-          <a href="about.html" class="btn btn-primary">ABOUT APEXSTACK</a>
-          <a href="careers.html" class="btn btn-outline-white">JOIN OUR TEAM</a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Slider Navigation -->
-    <div class="hero-slider-nav">
-      <button class="hero-dot active" data-goto="0" aria-label="Slide 1"></button>
-      <button class="hero-dot" data-goto="1" aria-label="Slide 2"></button>
-      <button class="hero-dot" data-goto="2" aria-label="Slide 3"></button>
-      <button class="hero-dot" data-goto="3" aria-label="Slide 4"></button>
-      <div class="hero-dot-progress"></div>
-    </div>
-  </section>
-
-  <!-- ======== CLIENT LOGOS ======== -->
-  <section class="clients-bar">
-    <div class="container">
-      <div class="clients-logos">
-        <span class="client-logo">HitchPay</span>
-        <span class="client-logo">Quarina</span>
-        <span class="client-logo">Factory Reset</span>
-        <span class="client-logo">WakaMI</span>
-        <span class="client-logo">B&amp;M</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======== INTRO / ABOUT ======== -->
-  <section class="intro-section">
-    <div class="container">
-      <div class="intro-grid">
-        <div>
-          <h2 class="section-title">Clients say working with us is like having a compass<span class="dot">.</span></h2>
-        </div>
-        <div>
-          <p class="section-subtitle">Get access to 20+ certified cloud-native engineers guiding best practice, pre-empting pitfalls, providing essential technical support, and steering teams through cultural change.</p>
-          <br>
-          <a href="about.html" class="btn-link">MORE ABOUT US <span class="arrow">&rarr;</span></a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ======== SERVICES ======== -->
-  <section class="services-section">
+  <!-- ======== PARTNERS / LOGOS BAR ======== -->
+  <section class="logos-bar">
     <div class="container">
-      <div class="services-header">
-        <p class="section-label">What We Do</p>
-        <h2 class="section-title">Comprehensive cloud services built for enterprise scale<span class="dot">.</span></h2>
-        <p class="section-subtitle">From project-specific support to fully managed services, we help you become stronger, more agile, and faster with public cloud.</p>
-        <br>
-        <a href="services.html" class="btn-link">ALL SERVICES <span class="arrow">&rarr;</span></a>
+      <p class="logos-label">Trusted by innovative companies</p>
+      <div class="logos-row">
+        <span class="partner-logo-text">HitchPay</span>
+        <span class="partner-logo-text">Quarina</span>
+        <span class="partner-logo-text">Factory Reset</span>
+        <span class="partner-logo-text">WakaMI</span>
+        <span class="partner-logo-text">B&amp;M</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== FEATURES / WHAT WE DO (White BG) ======== -->
+  <section class="features-section">
+    <div class="container">
+      <div class="section-header section-header--center">
+        <p class="section-label">What we do</p>
+        <h2 class="section-title">Comprehensive cloud services<br>built for enterprise scale</h2>
+        <p class="section-desc">From project-specific support to fully managed services, we help you become stronger, more agile, and faster with public cloud.</p>
       </div>
 
-      <div class="services-grid">
-        <div class="service-card">
-          <div class="service-icon">&#9881;</div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </div>
           <h3>Cloud Strategy</h3>
-          <div class="service-links">
-            <a href="services.html#cloud-strategy">Cloud Transformation</a>
-            <a href="services.html#cloud-strategy">Cloud Training &amp; Enablement</a>
-          </div>
+          <p>Expert guidance on cloud adoption, transformation roadmaps, and training to align your cloud journey with business goals.</p>
+          <a href="services.html#cloud-strategy" class="card-link">Learn more <span>&rarr;</span></a>
         </div>
 
-        <div class="service-card">
-          <div class="service-icon">&#9729;</div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          </div>
           <h3>Foundation &amp; Migration</h3>
-          <div class="service-links">
-            <a href="services.html#migration">Cloud Foundations</a>
-            <a href="services.html#migration">Cloud Migration</a>
-            <a href="services.html#migration">Cloud Security</a>
-          </div>
+          <p>Secure cloud foundations, seamless migration execution, and robust security frameworks for your infrastructure.</p>
+          <a href="services.html#migration" class="card-link">Learn more <span>&rarr;</span></a>
         </div>
 
-        <div class="service-card">
-          <div class="service-icon">&#10024;</div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
           <h3>Innovation &amp; Modernization</h3>
-          <div class="service-links">
-            <a href="services.html#modernization">Platform &amp; App Modernization</a>
-            <a href="services.html#modernization">AI &amp; Data</a>
-            <a href="services.html#modernization">Cloud-Native Build</a>
-            <a href="services.html#modernization">Cloud DevOps</a>
-          </div>
+          <p>Platform modernization, AI &amp; data solutions, cloud-native builds, and DevOps automation for modern enterprises.</p>
+          <a href="services.html#modernization" class="card-link">Learn more <span>&rarr;</span></a>
         </div>
 
-        <div class="service-card">
-          <div class="service-icon">&#128736;</div>
-          <h3>Managed Services</h3>
-          <div class="service-links">
-            <a href="services.html#managed">Managed Cloud Services</a>
-            <a href="services.html#managed">Application Management</a>
-            <a href="services.html#managed">Cloud FinOps</a>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </div>
+          <h3>Managed Services</h3>
+          <p>24/7 managed cloud operations, application management, and FinOps to keep your infrastructure running at peak.</p>
+          <a href="services.html#managed" class="card-link">Learn more <span>&rarr;</span></a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ======== TESTIMONIALS ======== -->
+  <!-- ======== ABOUT / INTRO (Black BG) ======== -->
+  <section class="about-section">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-left">
+          <p class="section-label">About ApexStack</p>
+          <h2 class="section-title">Clients say working with us is like having a compass</h2>
+        </div>
+        <div class="about-right">
+          <p>Get access to 20+ certified cloud-native engineers guiding best practice, pre-empting pitfalls, providing essential technical support, and steering teams through cultural change.</p>
+          <p>With teams across Nigeria and Berlin, we bring world-class cloud engineering to enterprises wherever they operate.</p>
+          <a href="about.html" class="btn btn-outline-light">More about us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== PLATFORMS (Black BG) ======== -->
+  <section class="services-highlight">
+    <div class="container">
+      <div class="section-header">
+        <p class="section-label">Our platforms</p>
+        <h2 class="section-title">Multi-cloud expertise across<br>all major platforms</h2>
+      </div>
+      <div class="platforms-grid">
+        <div class="platform-card">
+          <div class="platform-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          </div>
+          <h3>Amazon Web Services</h3>
+          <p>Advanced consulting partner with deep expertise in AWS architecture, migration, and managed services.</p>
+        </div>
+        <div class="platform-card">
+          <div class="platform-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="9" height="9" rx="1"/><rect x="13" y="2" width="9" height="9" rx="1"/><rect x="2" y="13" width="9" height="9" rx="1"/><rect x="13" y="13" width="9" height="9" rx="1"/></svg>
+          </div>
+          <h3>Microsoft Azure</h3>
+          <p>Gold partner delivering Azure solutions for enterprise workloads, hybrid cloud, and digital transformation.</p>
+        </div>
+        <div class="platform-card">
+          <div class="platform-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+          </div>
+          <h3>Google Cloud</h3>
+          <p>Certified partner specializing in GCP data analytics, machine learning, and cloud-native application development.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======== TESTIMONIALS (Black BG) ======== -->
   <section class="testimonials-section">
     <div class="container">
-      <h2 class="section-title">What our customers say<span class="dot">.</span></h2>
-
+      <div class="section-header section-header--center">
+        <p class="section-label">Testimonials</p>
+        <h2 class="section-title">What our customers say</h2>
+      </div>
       <div class="testimonials-grid">
         <div class="testimonial-card">
-          <span class="testimonial-company">HitchPay</span>
-          <div class="testimonial-quote-mark">&ldquo;</div>
-          <p class="testimonial-text">The ApexStack team is exceptionally supportive in engaging the wider business. At every level, they are professional, transparent, and deeply competent. This built real trust throughout the project.</p>
+          <div class="testimonial-stars">
+            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+          </div>
+          <p class="testimonial-text">The ApexStack team is exceptionally supportive in engaging the wider business. At every level, they are professional, transparent, and deeply competent.</p>
           <div class="testimonial-author">
-            <p class="testimonial-name">ADEWALE OKONKWO</p>
-            <p class="testimonial-role">CTO, HitchPay</p>
+            <div class="testimonial-avatar">AO</div>
+            <div>
+              <p class="testimonial-name">Adewale Okonkwo</p>
+              <p class="testimonial-role">CTO, HitchPay</p>
+            </div>
           </div>
         </div>
-
         <div class="testimonial-card">
-          <span class="testimonial-company">WakaMI</span>
-          <div class="testimonial-quote-mark">&ldquo;</div>
+          <div class="testimonial-stars">
+            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+          </div>
           <p class="testimonial-text">They showed us how to use public cloud to reduce time-to-market as we develop our digital portfolio. Our deployment cycles went from weeks to hours.</p>
           <div class="testimonial-author">
-            <p class="testimonial-name">FATIMA BELLO</p>
-            <p class="testimonial-role">Director of Engineering, WakaMI</p>
+            <div class="testimonial-avatar">FB</div>
+            <div>
+              <p class="testimonial-name">Fatima Bello</p>
+              <p class="testimonial-role">Director of Engineering, WakaMI</p>
+            </div>
           </div>
         </div>
-
         <div class="testimonial-card">
-          <span class="testimonial-company">B&amp;M</span>
-          <div class="testimonial-quote-mark">&ldquo;</div>
-          <p class="testimonial-text">Together with ApexStack's highly skilled engineering and managed services teams, we were able to rapidly build a scalable, fully-managed cloud environment for our operations platform.</p>
+          <div class="testimonial-stars">
+            <span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span><span>&#9733;</span>
+          </div>
+          <p class="testimonial-text">Together with ApexStack's highly skilled engineering and managed services teams, we rapidly built a scalable, fully-managed cloud environment.</p>
           <div class="testimonial-author">
-            <p class="testimonial-name">JAMES MITCHELL</p>
-            <p class="testimonial-role">Head of Cloud Services, B&amp;M</p>
+            <div class="testimonial-avatar">JM</div>
+            <div>
+              <p class="testimonial-name">James Mitchell</p>
+              <p class="testimonial-role">Head of Cloud Services, B&amp;M</p>
+            </div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ======== NEWSLETTER ======== -->
-  <section class="newsletter-section">
-    <div class="container">
-      <div class="newsletter-content">
-        <h2>Stay ahead of the cloud curve<span class="dot">.</span> CloudPulse<span class="dot">.</span></h2>
-        <p>Get monthly insights, best practices, and industry trends delivered straight to your inbox. No fluff, just actionable cloud intelligence.</p>
-        <form class="newsletter-form">
-          <input type="email" class="newsletter-input" placeholder="Your e-mail address" required>
-          <button type="submit" class="btn btn-primary">SUBSCRIBE</button>
-        </form>
-        <div class="newsletter-checkbox">
-          <input type="checkbox" id="consent" required>
-          <label for="consent">I agree to receive communications from ApexStack. You can unsubscribe at any time.</label>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======== CTA / CONTACT TEASER ======== -->
+  <!-- ======== CTA (White BG) ======== -->
   <section class="cta-section">
     <div class="container">
-      <div class="cta-grid">
-        <div class="cta-content">
-          <h2>Let's talk about how we can help with your cloud journey<span class="dot">.</span></h2>
-          <p>Our experts are standing by to discuss your migration, modernization, development, and managed services needs.</p>
-          <a href="contact.html" class="btn btn-primary">GET IN TOUCH</a>
+      <div class="cta-content">
+        <h2>Ready to get started?</h2>
+        <p>Let's discuss how ApexStack can accelerate your cloud journey. Our experts are standing by to help with migration, modernization, and managed services.</p>
+        <div class="cta-buttons">
+          <a href="contact.html" class="btn btn-primary">Book a consultation</a>
+          <a href="services.html" class="btn btn-outline-dark">View services</a>
         </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="cta-card">
-          <div class="cta-card-avatar">&#128100;</div>
-          <p class="cta-card-quote">"Let's solve your toughest business and IT challenges together."</p>
-          <div class="cta-card-author">
-            <p class="cta-card-name">AMZAT OYETUNJI</p>
-            <p class="cta-card-role">CTO, ApexStack</p>
-          </div>
+  <!-- ======== NEWSLETTER (Black BG) ======== -->
+  <section class="newsletter-section">
+    <div class="container">
+      <div class="newsletter-grid">
+        <div class="newsletter-left">
+          <h2>Stay ahead of the cloud curve</h2>
+          <p>Get monthly insights, best practices, and industry trends delivered straight to your inbox.</p>
+        </div>
+        <div class="newsletter-right">
+          <form class="newsletter-form">
+            <input type="email" class="newsletter-input" placeholder="Enter your email" required>
+            <button type="submit" class="btn btn-primary">Subscribe</button>
+          </form>
+          <p class="newsletter-disclaimer">No spam. Unsubscribe at any time.</p>
         </div>
       </div>
     </div>
@@ -395,52 +382,47 @@
   <!-- ======== FOOTER ======== -->
   <footer class="footer">
     <div class="container">
-      <div class="footer-grid">
-        <div class="footer-col">
-          <h4>Cloud Platforms</h4>
-          <div class="footer-links">
-            <a href="services.html">Amazon Web Services</a>
-            <a href="services.html">Microsoft Azure</a>
-            <a href="services.html">Google Cloud</a>
-            <a href="services.html">Red Hat OpenShift</a>
-            <a href="services.html">Kubernetes &amp; CNCF</a>
-          </div>
+      <div class="footer-top">
+        <div class="footer-brand">
+          <a href="index.html" class="logo">
+            <span class="logo-icon">A</span>
+            ApexStack
+          </a>
+          <p class="footer-tagline">Enterprise cloud engineering and digital transformation, powered by multi-cloud certified teams.</p>
         </div>
-        <div class="footer-col">
-          <h4>Industries</h4>
-          <div class="footer-links">
-            <a href="industries.html#finance">Financial Services</a>
-            <a href="industries.html#healthcare">Healthcare</a>
-            <a href="industries.html#manufacturing">Manufacturing</a>
-            <a href="industries.html#retail">Retail &amp; E-Commerce</a>
-            <a href="industries.html#energy">Energy &amp; Utilities</a>
-            <a href="industries.html#public">Public Sector</a>
-            <a href="industries.html">Technology &amp; SaaS</a>
+        <div class="footer-grid">
+          <div class="footer-col">
+            <h4>Cloud Platforms</h4>
+            <div class="footer-links">
+              <a href="services.html">Amazon Web Services</a>
+              <a href="services.html">Microsoft Azure</a>
+              <a href="services.html">Google Cloud</a>
+              <a href="services.html">Red Hat OpenShift</a>
+              <a href="services.html">Kubernetes &amp; CNCF</a>
+            </div>
           </div>
-        </div>
-        <div class="footer-col">
-          <h4>Company</h4>
-          <div class="footer-links">
-            <a href="contact.html">Contact</a>
-            <a href="careers.html">Careers</a>
-            <a href="about.html">About Us</a>
-            <a href="about.html#offices">Our Offices</a>
-            <a href="about.html#leadership">Leadership Team</a>
-            <a href="about.html#culture">Community &amp; Culture</a>
+          <div class="footer-col">
+            <h4>Company</h4>
+            <div class="footer-links">
+              <a href="about.html">About Us</a>
+              <a href="careers.html">Careers</a>
+              <a href="contact.html">Contact</a>
+              <a href="industries.html">Industries</a>
+              <a href="services.html">Services</a>
+            </div>
           </div>
-        </div>
-        <div class="footer-col">
-          <h4>Policies</h4>
-          <div class="footer-links">
-            <a href="privacy-notice.html">Privacy Notice</a>
-            <a href="quality-policy.html">Quality Policy</a>
-            <a href="esg-statement.html">ESG Statement</a>
-            <a href="security.html">Security</a>
-            <a href="cookie-settings.html">Cookie Settings</a>
+          <div class="footer-col">
+            <h4>Legal</h4>
+            <div class="footer-links">
+              <a href="privacy-notice.html">Privacy Notice</a>
+              <a href="quality-policy.html">Quality Policy</a>
+              <a href="esg-statement.html">ESG Statement</a>
+              <a href="security.html">Security</a>
+              <a href="cookie-settings.html">Cookie Settings</a>
+            </div>
           </div>
         </div>
       </div>
-
       <div class="footer-bottom">
         <p>&copy; 2026 ApexStack. All rights reserved.</p>
         <div class="footer-socials">
@@ -453,9 +435,7 @@
     </div>
   </footer>
 
-  <!-- Scroll to Top -->
   <button class="scroll-top" aria-label="Scroll to top">&#8593;</button>
-
   <script src="js/main.js"></script>
 </body>
 </html>
