@@ -614,6 +614,267 @@ h1, h2, h3, h4, h5, h6 {
   flex-wrap: wrap;
 }
 
+/* ---- Hero Slider ---- */
+.hero-slide {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s ease, transform 0.8s ease, visibility 0.8s;
+  pointer-events: none;
+}
+
+.hero-slide.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  position: relative;
+  top: auto;
+  transform: none;
+}
+
+.hero-slide.slide-exit {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+.hero-slide.slide-enter {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.hero-slide.slide-enter.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.hero-slider-nav {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 10;
+}
+
+.hero-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.hero-dot:hover {
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-dot.active {
+  border-color: var(--primary);
+  background: var(--primary);
+  transform: scale(1.2);
+}
+
+.hero-dot-progress {
+  display: none;
+}
+
+/* ---- Slide 1: Platforms (default left-aligned) ---- */
+.hero-slide--platforms .hero-badge {
+  background: rgba(0, 212, 255, 0.15);
+  border-color: rgba(0, 212, 255, 0.3);
+}
+
+/* ---- Slide 2: Services (centered with stats) ---- */
+.hero-slide--services {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-slide-center {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.hero-slide-center h1 {
+  font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+}
+
+.hero-slide-center .hero-text {
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-label {
+  display: inline-block;
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 1.25rem;
+}
+
+.hero-stat-row {
+  display: flex;
+  justify-content: center;
+  gap: 3rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero-stat-number {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  line-height: 1;
+}
+
+.hero-stat-label {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8125rem;
+  margin-top: 0.375rem;
+  font-weight: 500;
+}
+
+.hero-slide--services h1 .dot { color: var(--accent-cyan); }
+
+/* ---- Slide 3: Managed (split layout with feature cards) ---- */
+.hero-slide--managed h1 .dot { color: var(--accent-teal); }
+
+.hero-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.hero-split-left {
+  max-width: 520px;
+}
+
+.hero-split-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.hero-feature-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(15, 212, 180, 0.2);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.hero-feature-card:hover {
+  border-color: rgba(15, 212, 180, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.hero-feature-icon {
+  font-size: 1.75rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 212, 180, 0.1);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.hero-feature-card strong {
+  color: var(--white);
+  font-size: 1rem;
+  display: block;
+  margin-bottom: 0.125rem;
+}
+
+.hero-feature-card p {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
+/* ---- Slide 4: Global (centered with location cards) ---- */
+.hero-slide--global h1 .dot { color: #ffc107; }
+
+.hero-globe-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  text-align: center;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.hero-locations {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.hero-location {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 193, 7, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.25);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+}
+
+.hero-location-flag {
+  font-size: 2rem;
+}
+
+.hero-location strong {
+  color: var(--white);
+  display: block;
+  font-size: 1rem;
+}
+
+.hero-location span {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.8125rem;
+}
+
+.hero-location-line {
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(to right, rgba(255, 193, 7, 0.5), rgba(255, 193, 7, 0.1));
+}
+
 /* ============================================
    Client Logos
    ============================================ */
@@ -1697,6 +1958,30 @@ h1, h2, h3, h4, h5, h6 {
     max-width: 100%;
   }
 
+  .hero-split {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .hero-split-right {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .hero-feature-card {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 200px;
+  }
+
+  .hero-stat-number {
+    font-size: 1.875rem;
+  }
+
+  .hero-locations {
+    gap: 1.5rem;
+  }
+
   .case-studies-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1781,6 +2066,51 @@ h1, h2, h3, h4, h5, h6 {
 
   .hero-buttons {
     flex-direction: column;
+  }
+
+  .hero-split {
+    gap: 1.5rem;
+  }
+
+  .hero-split-right {
+    flex-direction: column;
+  }
+
+  .hero-feature-card {
+    flex: 1 1 100%;
+    min-width: unset;
+  }
+
+  .hero-stat-row {
+    gap: 1.5rem;
+  }
+
+  .hero-stat-number {
+    font-size: 1.5rem;
+  }
+
+  .hero-globe-icon {
+    font-size: 2.5rem;
+  }
+
+  .hero-locations {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .hero-location-line {
+    width: 2px;
+    height: 30px;
+    background: linear-gradient(to bottom, rgba(255, 193, 7, 0.5), rgba(255, 193, 7, 0.1));
+  }
+
+  .hero-slide-center h1 {
+    font-size: 2rem;
+  }
+
+  .hero-slider-nav {
+    bottom: 1.5rem;
   }
 
   .newsletter-form {

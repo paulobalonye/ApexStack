@@ -157,6 +157,66 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // ---- Hero Slider ----
+  var heroSlides = document.querySelectorAll('.hero-slide');
+  var heroDots = document.querySelectorAll('.hero-dot');
+  var currentSlide = 0;
+  var slideInterval = null;
+  var slideCount = heroSlides.length;
+
+  function goToSlide(index) {
+    if (slideCount === 0) return;
+    // Remove active from current
+    heroSlides[currentSlide].classList.remove('active');
+    heroSlides[currentSlide].classList.add('slide-exit');
+    heroDots[currentSlide]?.classList.remove('active');
+
+    currentSlide = index;
+
+    // Add enter animation class
+    heroSlides[currentSlide].classList.add('slide-enter');
+    heroSlides[currentSlide].classList.add('active');
+    heroDots[currentSlide]?.classList.add('active');
+
+    // Clean up animation classes after transition
+    setTimeout(function () {
+      heroSlides.forEach(function (slide) {
+        slide.classList.remove('slide-exit');
+        slide.classList.remove('slide-enter');
+      });
+    }, 850);
+  }
+
+  function nextSlide() {
+    goToSlide((currentSlide + 1) % slideCount);
+  }
+
+  function startAutoplay() {
+    if (slideCount <= 1) return;
+    slideInterval = setInterval(nextSlide, 5000);
+  }
+
+  function resetAutoplay() {
+    clearInterval(slideInterval);
+    startAutoplay();
+  }
+
+  // Dot click handlers
+  heroDots.forEach(function (dot) {
+    dot.addEventListener('click', function () {
+      var target = parseInt(this.getAttribute('data-goto'));
+      if (target !== currentSlide) {
+        goToSlide(target);
+        resetAutoplay();
+      }
+    });
+  });
+
+  // Start autoplay if there are slides
+  if (slideCount > 1) {
+    startAutoplay();
+  }
+
   // ---- Set active nav link based on current page ----
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.nav-link').forEach(function (link) {
