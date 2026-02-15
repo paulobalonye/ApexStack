@@ -21,8 +21,9 @@
   --gray-700: #333333;
   --gray-800: #1a1a1a;
   --gray-900: #0d0d0d;
-  --lime: #c8ff00;
-  --lime-dark: #a8d600;
+  --lime: #b8e600;
+  --lime-dark: #9abf00;
+  --lime-on-light: #4a7a00;
   --lime-glow: rgba(200, 255, 0, 0.15);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --radius: 8px;
@@ -731,11 +732,24 @@ h1, h2, h3, h4, h5, h6 {
 .section-label {
   display: inline-block;
   color: var(--lime);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.8125rem;
+  font-weight: 700;
   letter-spacing: 2.5px;
   text-transform: uppercase;
   margin-bottom: 1rem;
+}
+
+/* On white / light backgrounds, use a darker green for visibility */
+.features-section .section-label,
+.content-section .section-label,
+.content-section.alt-bg .section-label {
+  color: var(--lime-on-light);
+}
+
+.features-section .section-title .dot,
+.content-section .section-title .dot,
+.content-section.alt-bg .section-title .dot {
+  color: var(--lime-on-light);
 }
 
 .section-title {
@@ -805,11 +819,11 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--lime-glow);
-  border: 1px solid rgba(200, 255, 0, 0.25);
+  background: rgba(74, 122, 0, 0.08);
+  border: 1px solid rgba(74, 122, 0, 0.2);
   border-radius: var(--radius);
   margin-bottom: 1.5rem;
-  color: #6b8f00;
+  color: var(--lime-on-light);
 }
 
 .feature-card h3 {
@@ -1325,11 +1339,11 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--lime-glow);
-  border: 1px solid rgba(200, 255, 0, 0.25);
+  background: rgba(74, 122, 0, 0.08);
+  border: 1px solid rgba(74, 122, 0, 0.2);
   border-radius: var(--radius);
   margin-bottom: 1.5rem;
-  color: var(--lime-dark);
+  color: var(--lime-on-light);
 }
 
 /* Service Cards (Inner Pages) */
