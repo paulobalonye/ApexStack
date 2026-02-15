@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/styles.css?v=2">
 </head>
 <body>
 
@@ -20,7 +20,7 @@
         ApexStack
       </a>
 
-      <nav class="nav-menu">
+      <nav class="nav-menu-desktop">
         <div class="nav-item">
           <a href="services.html" class="nav-link">Services <span class="nav-chevron">&#9660;</span></a>
           <div class="dropdown">
@@ -48,9 +48,6 @@
         <div class="nav-item">
           <a href="contact.html" class="nav-link">Contact</a>
         </div>
-        <div class="nav-item mobile-cta">
-          <a href="https://calendar.app.google/BxDyBrZkGM43fp6L6" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%; text-align: center; margin-top: 1rem;">Book a Consultation</a>
-        </div>
       </nav>
 
       <div class="header-actions">
@@ -60,6 +57,40 @@
       </div>
     </div>
   </header>
+
+  <!-- Mobile menu (OUTSIDE header to avoid backdrop-filter stacking context) -->
+  <nav class="nav-menu" id="mobile-nav" style="display:none;">
+    <div class="nav-item">
+      <a href="services.html" class="nav-link">Services <span class="nav-chevron">&#9660;</span></a>
+      <div class="dropdown">
+        <a href="services.html#cloud-strategy" class="dropdown-link">Cloud Strategy</a>
+        <a href="services.html#migration" class="dropdown-link">Migration &amp; Foundation</a>
+        <a href="services.html#modernization" class="dropdown-link">Innovation &amp; Modernization</a>
+        <a href="services.html#managed" class="dropdown-link">Managed Services</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="industries.html" class="nav-link">Industries <span class="nav-chevron">&#9660;</span></a>
+      <div class="dropdown">
+        <a href="industries.html#finance" class="dropdown-link">Financial Services</a>
+        <a href="industries.html#healthcare" class="dropdown-link">Healthcare</a>
+        <a href="industries.html#manufacturing" class="dropdown-link">Manufacturing</a>
+        <a href="industries.html#retail" class="dropdown-link">Retail &amp; E-Commerce</a>
+      </div>
+    </div>
+    <div class="nav-item">
+      <a href="about.html" class="nav-link">Company</a>
+    </div>
+    <div class="nav-item">
+      <a href="careers.html" class="nav-link">Careers</a>
+    </div>
+    <div class="nav-item">
+      <a href="contact.html" class="nav-link">Contact</a>
+    </div>
+    <div class="nav-item mobile-cta">
+      <a href="https://calendar.app.google/BxDyBrZkGM43fp6L6" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%; text-align: center; margin-top: 1rem;">Book a Consultation</a>
+    </div>
+  </nav>
 
   <!-- ======== HERO ======== -->
   <section class="hero">
@@ -435,6 +466,6 @@
   </footer>
 
   <button class="scroll-top" aria-label="Scroll to top">&#8593;</button>
-  <script src="js/main.js"></script>
+  <script src="js/main.js?v=2"></script>
 </body>
 </html>

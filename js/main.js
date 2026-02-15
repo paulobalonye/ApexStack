@@ -36,6 +36,13 @@ document.addEventListener('DOMContentLoaded', function () {
   mobileToggle?.addEventListener('click', function () {
     this.classList.toggle('active');
     navMenu?.classList.toggle('active');
+    if (navMenu) {
+      if (navMenu.classList.contains('active')) {
+        navMenu.style.cssText = 'display:flex; position:fixed; top:72px; left:0; right:0; bottom:0; background:#000000; z-index:99999; flex-direction:column; padding:1.5rem 2rem 2rem; overflow-y:auto; border-top:1px solid rgba(255,255,255,0.1);';
+      } else {
+        navMenu.style.cssText = 'display:none;';
+      }
+    }
   });
 
   // Mobile dropdown toggle - tap to expand/collapse submenus
@@ -46,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (link && dropdown) {
       link.addEventListener('click', function (e) {
         // Only toggle dropdown on mobile
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
           e.preventDefault();
           // Close other open dropdowns
           document.querySelectorAll('.nav-item.dropdown-open').forEach(function (openItem) {
@@ -60,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
     } else if (link) {
       // Links without dropdowns close the menu
       link.addEventListener('click', function () {
-        if (window.innerWidth <= 768) {
+        if (window.innerWidth <= 1024) {
           mobileToggle?.classList.remove('active');
           navMenu?.classList.remove('active');
         }
@@ -71,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Close mobile menu when a dropdown link is clicked
   document.querySelectorAll('.dropdown-link').forEach(function (link) {
     link.addEventListener('click', function () {
-      if (window.innerWidth <= 768) {
+      if (window.innerWidth <= 1024) {
         mobileToggle?.classList.remove('active');
         navMenu?.classList.remove('active');
         document.querySelectorAll('.nav-item.dropdown-open').forEach(function (item) {
