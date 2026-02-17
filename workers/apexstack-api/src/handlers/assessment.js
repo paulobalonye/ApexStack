@@ -1,12 +1,11 @@
 /* ============================================
    Assessment Handler
    Orchestrates: Resend emails, HubSpot CRM +
-   Deal pipeline, Web3Forms, D1 database
+   Deal pipeline, D1 database
    ============================================ */
 
 import { sendAssessmentEmails } from '../services/resend.js';
 import { createHubSpotContact, createHubSpotDeal } from '../services/hubspot.js';
-import { forwardToWeb3Forms } from '../services/web3forms.js';
 import { insertLead } from '../db/queries.js';
 
 export async function handleAssessment(body, env, ctx) {
@@ -36,7 +35,6 @@ export async function handleAssessment(body, env, ctx) {
   const results = {
     resend: null,
     hubspot: null,
-    web3forms: null,
     database: null,
   };
 
@@ -68,15 +66,7 @@ export async function handleAssessment(body, env, ctx) {
       results.hubspot = { success: false, error: err.message };
     });
 
-  // 3. Forward to Web3Forms (preserves existing internal notification)
-  const web3formsPromise = forwardToWeb3Forms(leadData, env)
-    .then(res => { results.web3forms = { success: true, data: res }; })
-    .catch(err => {
-      console.error('Web3Forms error:', err);
-      results.web3forms = { success: false, error: err.message };
-    });
-
-  // 4. Store in D1 database
+  // 3. Store in D1 database
   const dbPromise = insertLead(leadData, env)
     .then(res => { results.database = { success: true }; })
     .catch(err => {
@@ -85,7 +75,7 @@ export async function handleAssessment(body, env, ctx) {
     });
 
   // Wait for all services to complete
-  await Promise.all([resendPromise, hubspotPromise, web3formsPromise, dbPromise]);
+  await Promise.all([resendPromise, hubspotPromise, dbPromise]);
 
   // Return success if at least Resend worked
   const overallSuccess = results.resend?.success || false;

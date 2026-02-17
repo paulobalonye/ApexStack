@@ -35,7 +35,7 @@ export async function handleContact(body, env) {
     database: null,
   };
 
-  // Fan out to all services concurrently
+  // Send confirmation + forward emails first (2 Resend calls)
   const confirmationPromise = sendContactConfirmation(contactData, env)
     .then(res => { results.confirmation = { success: true }; })
     .catch(err => {
@@ -50,14 +50,7 @@ export async function handleContact(body, env) {
       results.forward = { success: false, error: err.message };
     });
 
-  // Send nurture drip (Day 2 + Day 5 scheduled emails)
-  const nurturePromise = sendContactNurtureEmails(contactData, env)
-    .then(res => { results.nurture = { success: true, data: res }; })
-    .catch(err => {
-      console.error('Contact nurture email error:', err);
-      results.nurture = { success: false, error: err.message };
-    });
-
+  // HubSpot + D1 can run concurrently with emails (different APIs)
   const hubspotPromise = createHubSpotContact({
     name: `${contactData.firstName} ${contactData.lastName}`,
     email: contactData.email,
@@ -80,7 +73,21 @@ export async function handleContact(body, env) {
       results.database = { success: false, error: err.message };
     });
 
-  await Promise.all([confirmationPromise, forwardPromise, nurturePromise, hubspotPromise, dbPromise]);
+  // Wait for confirmation + forward to finish before nurture (Resend 2 req/sec limit)
+  await Promise.all([confirmationPromise, forwardPromise]);
+
+  // Delay 1 second to let Resend rate limit window reset
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  // Send nurture drip (Day 2 + Day 5 scheduled emails) — after rate limit window
+  const nurturePromise = sendContactNurtureEmails(contactData, env)
+    .then(res => { results.nurture = { success: true, data: res }; })
+    .catch(err => {
+      console.error('Contact nurture email error:', err);
+      results.nurture = { success: false, error: err.message };
+    });
+
+  await Promise.all([nurturePromise, hubspotPromise, dbPromise]);
 
   return {
     success: true,

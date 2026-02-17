@@ -16,15 +16,15 @@ const HUBSPOT_API = 'https://api.hubapi.com';
 
 const CUSTOM_PROPERTIES = [
   // Category score properties (Feature 1)
-  { name: 'cloud_architecture_pct', label: 'Cloud Architecture %', type: 'number', groupName: 'contactinformation', description: 'Architecture & IaC assessment score percentage' },
-  { name: 'cloud_security_pct', label: 'Cloud Security %', type: 'number', groupName: 'contactinformation', description: 'Security & Compliance assessment score percentage' },
-  { name: 'cloud_deployment_pct', label: 'Cloud Deployment %', type: 'number', groupName: 'contactinformation', description: 'Deployment & DevOps assessment score percentage' },
-  { name: 'cloud_monitoring_pct', label: 'Cloud Monitoring %', type: 'number', groupName: 'contactinformation', description: 'Monitoring & Reliability assessment score percentage' },
-  { name: 'cloud_cost_pct', label: 'Cloud Cost %', type: 'number', groupName: 'contactinformation', description: 'Cost Optimization assessment score percentage' },
+  { name: 'cloud_architecture_pct', label: 'Cloud Architecture %', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Architecture & IaC assessment score percentage' },
+  { name: 'cloud_security_pct', label: 'Cloud Security %', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Security & Compliance assessment score percentage' },
+  { name: 'cloud_deployment_pct', label: 'Cloud Deployment %', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Deployment & DevOps assessment score percentage' },
+  { name: 'cloud_monitoring_pct', label: 'Cloud Monitoring %', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Monitoring & Reliability assessment score percentage' },
+  { name: 'cloud_cost_pct', label: 'Cloud Cost %', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Cost Optimization assessment score percentage' },
   // Engagement properties (Feature 5)
-  { name: 'email_opens_count', label: 'Email Opens', type: 'number', groupName: 'contactinformation', description: 'Total email opens from Resend' },
-  { name: 'email_clicks_count', label: 'Email Clicks', type: 'number', groupName: 'contactinformation', description: 'Total email link clicks from Resend' },
-  { name: 'email_engagement_level', label: 'Email Engagement', type: 'string', groupName: 'contactinformation', description: 'Engagement tier: hot, warm, or cold' },
+  { name: 'email_opens_count', label: 'Email Opens', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Total email opens from Resend' },
+  { name: 'email_clicks_count', label: 'Email Clicks', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Total email link clicks from Resend' },
+  { name: 'email_engagement_level', label: 'Email Engagement', type: 'string', fieldType: 'text', groupName: 'contactinformation', description: 'Engagement tier: hot, warm, or cold' },
 ];
 
 let propertiesEnsured = false;
@@ -34,6 +34,7 @@ export async function ensureCustomProperties(env) {
   const token = env.HUBSPOT_ACCESS_TOKEN;
   if (!token) return;
 
+  let allSucceeded = true;
   for (const prop of CUSTOM_PROPERTIES) {
     try {
       const res = await fetch(`${HUBSPOT_API}/crm/v3/properties/contacts`, {
@@ -49,12 +50,15 @@ export async function ensureCustomProperties(env) {
       } else if (!res.ok) {
         const err = await res.json();
         console.warn(`HubSpot: Could not create property ${prop.name}:`, err.message || err);
+        allSucceeded = false;
       }
     } catch (err) {
       console.warn(`HubSpot: Property creation error for ${prop.name}:`, err.message);
+      allSucceeded = false;
     }
   }
-  propertiesEnsured = true;
+  // Only mark as ensured if all properties created or already exist
+  propertiesEnsured = allSucceeded;
 }
 
 /* ============================================
