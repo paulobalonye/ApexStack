@@ -7,8 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ===== CONFIG =====
   var TOTAL_QUESTIONS = 12;
-  var WEB3FORMS_KEY = 'mojnqjdk';
-  var RECIPIENT_EMAIL = 'info@apexstackcloud.com';
+  var API_ENDPOINT = 'https://apexstack-api.noreplyhitchafrica.workers.dev/api/assessment';
 
   // Max scores per category (sum of max option values)
   var CATEGORY_MAX = {
@@ -170,10 +169,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Calculate scores
     var result = calculateScores();
 
-    // Send to Web3Forms
-    sendToWeb3Forms(name, email, company, role, result);
+    // Build detailed answers string for backend
+    var answersDetail = buildAnswersDetail();
 
-    // Show results
+    // Send to Worker API (Resend emails + HubSpot CRM + Web3Forms + D1)
+    sendToWorker(name, email, company, role, result, answersDetail);
+
+    // Show results immediately (don't wait for API)
     showResults(result);
   });
 
@@ -239,19 +241,9 @@ document.addEventListener('DOMContentLoaded', function () {
     };
   }
 
-  // ===== WEB3FORMS =====
-  function sendToWeb3Forms(name, email, company, role, result) {
-    var categoryBreakdown = '';
-    categoryBreakdown += 'Architecture: ' + result.categoryScores.architecture + '/' + CATEGORY_MAX.architecture + ' (' + result.categoryPct.architecture + '%)\n';
-    categoryBreakdown += 'Security: ' + result.categoryScores.security + '/' + CATEGORY_MAX.security + ' (' + result.categoryPct.security + '%)\n';
-    categoryBreakdown += 'Deployment & DevOps: ' + result.categoryScores.deployment + '/' + CATEGORY_MAX.deployment + ' (' + result.categoryPct.deployment + '%)\n';
-    categoryBreakdown += 'Monitoring & Reliability: ' + result.categoryScores.monitoring + '/' + CATEGORY_MAX.monitoring + ' (' + result.categoryPct.monitoring + '%)\n';
-    categoryBreakdown += 'Cost Optimization: ' + result.categoryScores.cost + '/' + CATEGORY_MAX.cost + ' (' + result.categoryPct.cost + '%)';
-
-    var risksText = result.risks.map(function (r, idx) { return (idx + 1) + '. ' + r; }).join('\n');
-    var recsText = result.recs.map(function (r, idx) { return (idx + 1) + '. ' + r; }).join('\n');
-
-    var answersDetail = '';
+  // ===== BUILD ANSWERS DETAIL =====
+  function buildAnswersDetail() {
+    var detail = '';
     for (var q = 1; q <= TOTAL_QUESTIONS; q++) {
       var questionEl = document.querySelector('[data-question="' + q + '"] h2');
       var selectedOption = document.querySelector('input[name="q' + q + '"]:checked');
@@ -259,40 +251,39 @@ document.addEventListener('DOMContentLoaded', function () {
         var optionLabel = selectedOption.closest('.assessment-option');
         var spans = optionLabel.querySelectorAll('.assessment-option-inner > span');
         var optionText = spans.length > 1 ? spans[spans.length - 1].textContent.trim() : 'N/A';
-        answersDetail += 'Q' + q + ': ' + questionEl.textContent + '\nAnswer: ' + optionText + ' (Score: ' + answers[q] + ')\n\n';
+        detail += 'Q' + q + ': ' + questionEl.textContent + '\nAnswer: ' + optionText + ' (Score: ' + answers[q] + ')\n\n';
       }
     }
+    return detail;
+  }
 
-    var message = '=== CLOUD READINESS ASSESSMENT RESULT ===\n\n';
-    message += 'OVERALL SCORE: ' + result.score + '/100 — ' + result.level.label + '\n\n';
-    message += '--- CATEGORY BREAKDOWN ---\n' + categoryBreakdown + '\n\n';
-    message += '--- TOP RISKS ---\n' + risksText + '\n\n';
-    message += '--- TOP RECOMMENDATIONS ---\n' + recsText + '\n\n';
-    message += '--- DETAILED ANSWERS ---\n' + answersDetail;
+  // ===== SEND TO WORKER API =====
+  function sendToWorker(name, email, company, role, result, answersDetail) {
+    var payload = {
+      name: name,
+      email: email,
+      company: company,
+      role: role,
+      score: result.score,
+      level: result.level.label,
+      categoryScores: result.categoryScores,
+      categoryPct: result.categoryPct,
+      risks: result.risks,
+      recs: result.recs,
+      answers: answersDetail
+    };
 
-    var formData = new FormData();
-    formData.append('access_key', WEB3FORMS_KEY);
-    formData.append('subject', 'Cloud Readiness Assessment: ' + company + ' — Score: ' + result.score + '/100 (' + result.level.label + ')');
-    formData.append('from_name', 'ApexStack Cloud Readiness Assessment');
-    formData.append('to', RECIPIENT_EMAIL);
-    formData.append('name', name);
-    formData.append('email', email);
-    formData.append('company', company);
-    formData.append('role', role);
-    formData.append('score', result.score + '/100');
-    formData.append('readiness_level', result.level.label);
-    formData.append('message', message);
-
-    fetch('https://api.web3forms.com/submit', {
+    fetch(API_ENDPOINT, {
       method: 'POST',
-      body: formData
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     }).then(function (res) {
       return res.json();
     }).then(function (data) {
       if (data.success) {
-        console.log('Assessment submitted successfully');
+        console.log('Assessment submitted successfully:', data);
       } else {
-        console.log('Web3Forms submission error:', data);
+        console.log('API submission error:', data);
       }
     }).catch(function (err) {
       console.log('Submission network error:', err);

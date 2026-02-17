@@ -1,0 +1,25 @@
+name = "apexstack-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+workers_dev = true
+
+# Route: bind to apexstackcloud.com/api/*
+routes = [
+  { pattern = "apexstackcloud.com/api/*", zone_name = "apexstackcloud.com" }
+]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "apexstack-leads"
+database_id = "addde47f-75df-4ef5-ac55-580f07a8d2f2"
+
+# Secrets (set via `wrangler secret put <NAME>`):
+# - RESEND_API_KEY
+# - HUBSPOT_ACCESS_TOKEN
+# - WEB3FORMS_KEY
+
+[vars]
+ENVIRONMENT = "production"
+FROM_EMAIL = "ApexStack Cloud <hello@apexstackcloud.com>"
+RECIPIENT_EMAIL = "info@apexstackcloud.com"

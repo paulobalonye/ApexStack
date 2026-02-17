@@ -1,0 +1,15 @@
+{
+  "name": "apexstack-api",
+  "version": "1.0.0",
+  "description": "ApexStack Cloud API - Assessment email automation, CRM, and lead capture",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute apexstack-leads --file=src/db/schema.sql",
+    "db:init:local": "wrangler d1 execute apexstack-leads --local --file=src/db/schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
