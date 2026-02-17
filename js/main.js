@@ -163,27 +163,48 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // ---- Contact form (Web3Forms) ----
+  // ---- Contact form (Worker API) ----
   const contactForm = document.getElementById('contact-form');
   contactForm?.addEventListener('submit', function (e) {
     e.preventDefault();
-    const form = this;
-    const status = document.getElementById('form-status');
-    const submitBtn = form.querySelector('button[type="submit"]');
+    var form = this;
+    var status = document.getElementById('form-status');
+    var submitBtn = form.querySelector('button[type="submit"]');
     submitBtn.disabled = true;
     submitBtn.textContent = 'SENDING...';
 
+    var payload = {
+      firstName: (document.getElementById('first-name')?.value || '').trim(),
+      lastName: (document.getElementById('last-name')?.value || '').trim(),
+      email: (document.getElementById('email')?.value || '').trim(),
+      company: (document.getElementById('company')?.value || '').trim(),
+      serviceInterest: document.getElementById('service-interest')?.value || '',
+      message: (document.getElementById('message')?.value || '').trim(),
+    };
+
     fetch(form.action, {
-      method: form.method,
-      body: new FormData(form)
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     }).then(function (response) {
       return response.json();
     }).then(function (data) {
       if (data.success) {
-        status.textContent = 'Thank you! Your message has been sent. We will get back to you within 24 hours.';
+        status.textContent = data.message || 'Thank you! Your message has been sent. We will get back to you within 24 hours.';
         status.style.display = 'block';
-        status.style.color = '#0fd4b4';
+        status.style.color = '#b8e600';
         form.reset();
+        // GA4 event tracking
+        if (typeof gtag === 'function') {
+          gtag('event', 'contact_form_submit', {
+            event_category: 'engagement',
+            event_label: payload.serviceInterest || 'general',
+          });
+        }
+        // Meta Pixel tracking
+        if (typeof fbq === 'function') {
+          fbq('track', 'Lead');
+        }
       } else {
         status.textContent = data.message || 'Something went wrong. Please try again.';
         status.style.display = 'block';
@@ -206,6 +227,35 @@ document.addEventListener('DOMContentLoaded', function () {
     if (href === currentPage) {
       link.classList.add('active');
     }
+  });
+
+  // ---- GA4 Event Tracking ----
+  // Track CTA button clicks (Book a Strategy Session)
+  document.querySelectorAll('a[href*="calendar.app.google"]').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (typeof gtag === 'function') {
+        gtag('event', 'cta_click', {
+          event_category: 'engagement',
+          event_label: 'book_strategy_session',
+          transport_type: 'beacon',
+        });
+      }
+      if (typeof fbq === 'function') {
+        fbq('track', 'Schedule');
+      }
+    });
+  });
+
+  // Track assessment page links
+  document.querySelectorAll('a[href="assessment.html"]').forEach(function (link) {
+    link.addEventListener('click', function () {
+      if (typeof gtag === 'function') {
+        gtag('event', 'assessment_start_click', {
+          event_category: 'engagement',
+          event_label: 'assessment_cta',
+        });
+      }
+    });
   });
 
 });

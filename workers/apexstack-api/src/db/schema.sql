@@ -32,3 +32,34 @@ CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at);
 
 -- Index for score-based analytics
 CREATE INDEX IF NOT EXISTS idx_leads_score ON leads(score);
+
+-- ============================================
+-- Contact Form Submissions
+-- ============================================
+CREATE TABLE IF NOT EXISTS contact_submissions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  company TEXT DEFAULT '',
+  service_interest TEXT DEFAULT '',
+  message TEXT DEFAULT '',
+  resend_status TEXT,
+  hubspot_status TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_contact_email ON contact_submissions(email);
+CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_submissions(created_at);
+
+-- ============================================
+-- Email Unsubscribes
+-- ============================================
+CREATE TABLE IF NOT EXISTS unsubscribes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL UNIQUE,
+  token TEXT NOT NULL,
+  unsubscribed_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_unsub_email ON unsubscribes(email);

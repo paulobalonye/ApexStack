@@ -23,7 +23,7 @@ function getCategoryLabel(cat) {
   return labels[cat] || cat;
 }
 
-export function buildScoreEmail({ name, firstName, score, level, categoryPct, risks, recs }) {
+export function buildScoreEmail({ name, firstName, score, level, categoryPct, risks, recs, unsubUrl }) {
   const scoreColor = getScoreColor(score);
 
   const categoryBars = Object.entries(categoryPct || {})
@@ -192,6 +192,7 @@ export function buildScoreEmail({ name, firstName, score, level, categoryPct, ri
               <div style="color: #4b5563; font-size: 11px; margin-top: 12px;">
                 You're receiving this because you completed our Cloud Readiness Assessment.
               </div>
+              ${unsubUrl ? `<div style="margin-top: 12px;"><a href="${unsubUrl}" style="color: #6b7280; font-size: 11px; text-decoration: underline;">Unsubscribe</a> from future emails</div>` : ''}
             </td>
           </tr>
 

@@ -5,7 +5,7 @@
    costs 47% in 90 days + CTA
    ============================================ */
 
-export function buildCaseStudyEmail({ name, firstName }) {
+export function buildCaseStudyEmail({ name, firstName, unsubUrl }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -149,6 +149,7 @@ export function buildCaseStudyEmail({ name, firstName }) {
               <div style="color: #4b5563; font-size: 11px; margin-top: 12px;">
                 You're receiving this because you completed our Cloud Readiness Assessment.
               </div>
+              ${unsubUrl ? `<div style="margin-top: 12px;"><a href="${unsubUrl}" style="color: #6b7280; font-size: 11px; text-decoration: underline;">Unsubscribe</a> from future emails</div>` : ''}
             </td>
           </tr>
 

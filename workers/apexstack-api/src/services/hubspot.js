@@ -82,3 +82,67 @@ export async function createHubSpotContact(leadData, env) {
 
   return { action: 'created', contactId: createData.id };
 }
+
+/* ============================================
+   HubSpot Deal Pipeline Automation
+   Creates a deal based on assessment score
+   ============================================ */
+
+function getDealStage(score) {
+  // Default HubSpot pipeline stages
+  if (score <= 30) return 'qualifiedtobuy';          // Qualification
+  if (score <= 60) return 'presentationscheduled';    // Discovery
+  if (score <= 80) return 'decisionmakerboughtin';    // Proposal
+  return 'contractsent';                               // Decision
+}
+
+export async function createHubSpotDeal(leadData, contactId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+
+  if (!token || !contactId) {
+    return { skipped: true, reason: 'No token or contact ID' };
+  }
+
+  const { company, score, level } = leadData;
+
+  const dealProperties = {
+    dealname: `${company} - Cloud Readiness Assessment`,
+    dealstage: getDealStage(score),
+    pipeline: 'default',
+    amount: '30000',
+    description: `Cloud Readiness Score: ${score}/100 (${level}). Auto-created from assessment.`,
+  };
+
+  try {
+    const createResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ properties: dealProperties }),
+    });
+
+    if (!createResponse.ok) {
+      const err = await createResponse.json();
+      throw new Error(`HubSpot deal create failed: ${JSON.stringify(err)}`);
+    }
+
+    const dealData = await createResponse.json();
+
+    // Associate deal with contact
+    try {
+      await fetch(`${HUBSPOT_API}/crm/v3/objects/deals/${dealData.id}/associations/contacts/${contactId}/3`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+    } catch (assocErr) {
+      console.error('HubSpot deal-contact association error:', assocErr);
+    }
+
+    return { dealId: dealData.id, stage: getDealStage(score) };
+  } catch (err) {
+    console.error('HubSpot deal creation error:', err);
+    return { success: false, error: err.message };
+  }
+}

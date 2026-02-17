@@ -1,11 +1,11 @@
 /* ============================================
    Assessment Handler
-   Orchestrates: Resend emails, HubSpot CRM,
-   Web3Forms notification, D1 database
+   Orchestrates: Resend emails, HubSpot CRM +
+   Deal pipeline, Web3Forms, D1 database
    ============================================ */
 
 import { sendAssessmentEmails } from '../services/resend.js';
-import { createHubSpotContact } from '../services/hubspot.js';
+import { createHubSpotContact, createHubSpotDeal } from '../services/hubspot.js';
 import { forwardToWeb3Forms } from '../services/web3forms.js';
 import { insertLead } from '../db/queries.js';
 
@@ -33,8 +33,6 @@ export async function handleAssessment(body, env, ctx) {
     submittedAt: new Date().toISOString(),
   };
 
-  // Fan out to all services concurrently
-  // Use ctx.waitUntil for non-blocking background tasks
   const results = {
     resend: null,
     hubspot: null,
@@ -50,9 +48,21 @@ export async function handleAssessment(body, env, ctx) {
       results.resend = { success: false, error: err.message };
     });
 
-  // 2. Create HubSpot contact
+  // 2. Create HubSpot contact + Deal
   const hubspotPromise = createHubSpotContact(leadData, env)
-    .then(res => { results.hubspot = { success: true, data: res }; })
+    .then(async (res) => {
+      results.hubspot = { success: true, data: res };
+      // Create deal if contact was created/updated successfully
+      if (res.contactId) {
+        try {
+          const deal = await createHubSpotDeal(leadData, res.contactId, env);
+          results.hubspot.deal = deal;
+        } catch (dealErr) {
+          console.error('HubSpot deal error:', dealErr);
+          results.hubspot.deal = { success: false, error: dealErr.message };
+        }
+      }
+    })
     .catch(err => {
       console.error('HubSpot error:', err);
       results.hubspot = { success: false, error: err.message };
@@ -77,7 +87,7 @@ export async function handleAssessment(body, env, ctx) {
   // Wait for all services to complete
   await Promise.all([resendPromise, hubspotPromise, web3formsPromise, dbPromise]);
 
-  // Return success if at least Resend worked (primary goal is sending the lead their report)
+  // Return success if at least Resend worked
   const overallSuccess = results.resend?.success || false;
 
   return {

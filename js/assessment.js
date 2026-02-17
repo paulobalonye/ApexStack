@@ -9,6 +9,10 @@ document.addEventListener('DOMContentLoaded', function () {
   var TOTAL_QUESTIONS = 12;
   var API_ENDPOINT = 'https://apexstack-api.noreplyhitchafrica.workers.dev/api/assessment';
 
+  // Store last result for PDF generation
+  var lastResult = null;
+  var lastCapture = null;
+
   // Max scores per category (sum of max option values)
   var CATEGORY_MAX = {
     architecture: 18,
@@ -173,11 +177,28 @@ document.addEventListener('DOMContentLoaded', function () {
     // Build detailed answers string for backend
     var answersDetail = buildAnswersDetail();
 
+    // Store result data for PDF generation
+    lastResult = result;
+    lastCapture = { name: name, email: email, company: company };
+
     // Send to Worker API (Resend emails + HubSpot CRM + Web3Forms + D1)
     sendToWorker(name, email, company, phone, role, result, answersDetail);
 
     // Show results immediately (don't wait for API)
     showResults(result);
+
+    // GA4 event tracking
+    if (typeof gtag === 'function') {
+      gtag('event', 'assessment_complete', {
+        event_category: 'assessment',
+        event_label: result.level.label,
+        value: result.score,
+      });
+    }
+    // Meta Pixel tracking
+    if (typeof fbq === 'function') {
+      fbq('track', 'CompleteRegistration', { value: result.score, currency: 'USD' });
+    }
   });
 
   // ===== SCORING =====
@@ -369,6 +390,207 @@ document.addEventListener('DOMContentLoaded', function () {
       if (progress < 1) requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);
+  }
+
+  // ===== PDF REPORT GENERATION =====
+  var pdfBtn = document.getElementById('btn-download-pdf');
+  if (pdfBtn) {
+    pdfBtn.addEventListener('click', function () {
+      if (!lastResult || !lastCapture) return;
+
+      // GA4 event
+      if (typeof gtag === 'function') {
+        gtag('event', 'pdf_download', {
+          event_category: 'assessment',
+          event_label: 'cloud_readiness_report',
+          value: lastResult.score,
+        });
+      }
+
+      generatePDFReport(lastResult, lastCapture);
+    });
+  }
+
+  function generatePDFReport(result, capture) {
+    if (typeof window.jspdf === 'undefined') {
+      alert('PDF library is loading. Please try again in a moment.');
+      return;
+    }
+
+    var jsPDF = window.jspdf.jsPDF;
+    var doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    var W = 210;
+    var y = 0;
+
+    // Colors
+    var black = [0, 0, 0];
+    var white = [255, 255, 255];
+    var lime = [184, 230, 0];
+    var gray = [156, 163, 175];
+    var darkGray = [107, 114, 128];
+    var cardBg = [17, 17, 17];
+
+    function getScoreColor(s) {
+      if (s <= 30) return [220, 38, 38];
+      if (s <= 60) return [245, 158, 11];
+      if (s <= 80) return [74, 122, 0];
+      return [5, 150, 105];
+    }
+
+    // Background
+    doc.setFillColor.apply(doc, black);
+    doc.rect(0, 0, W, 297, 'F');
+
+    // Logo area
+    y = 20;
+    doc.setFillColor.apply(doc, lime);
+    doc.roundedRect(20, y, 10, 10, 2, 2, 'F');
+    doc.setTextColor.apply(doc, black);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('A', 25, y + 7.5, { align: 'center' });
+    doc.setTextColor.apply(doc, white);
+    doc.setFontSize(16);
+    doc.text('ApexStack Cloud', 34, y + 7);
+
+    // Date
+    var today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    doc.setTextColor.apply(doc, darkGray);
+    doc.setFontSize(9);
+    doc.text(today, W - 20, y + 7, { align: 'right' });
+
+    // Title
+    y += 25;
+    doc.setTextColor.apply(doc, white);
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Cloud Readiness Report', 20, y);
+
+    // Name & Company
+    y += 10;
+    doc.setTextColor.apply(doc, gray);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Prepared for: ' + capture.name + (capture.company ? ' (' + capture.company + ')' : ''), 20, y);
+
+    // Score circle area
+    y += 18;
+    var scoreColor = getScoreColor(result.score);
+    doc.setFillColor(17, 17, 17);
+    doc.roundedRect(20, y, W - 40, 45, 4, 4, 'F');
+    doc.setDrawColor(34, 34, 34);
+    doc.roundedRect(20, y, W - 40, 45, 4, 4, 'S');
+
+    // Score number
+    doc.setTextColor.apply(doc, scoreColor);
+    doc.setFontSize(42);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(result.score), W / 2, y + 22, { align: 'center' });
+    doc.setTextColor.apply(doc, darkGray);
+    doc.setFontSize(16);
+    doc.text('/100', W / 2, y + 32, { align: 'center' });
+
+    // Level badge
+    doc.setFontSize(10);
+    doc.setTextColor.apply(doc, scoreColor);
+    doc.text(result.level.label, W / 2, y + 40, { align: 'center' });
+
+    // Category breakdown
+    y += 55;
+    doc.setFillColor(17, 17, 17);
+    doc.roundedRect(20, y, W - 40, 75, 4, 4, 'F');
+    doc.setDrawColor(34, 34, 34);
+    doc.roundedRect(20, y, W - 40, 75, 4, 4, 'S');
+
+    doc.setTextColor.apply(doc, white);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Category Breakdown', 28, y + 10);
+
+    var catLabels = {
+      architecture: 'Architecture & IaC',
+      security: 'Security & Compliance',
+      deployment: 'Deployment & DevOps',
+      monitoring: 'Monitoring & Reliability',
+      cost: 'Cost Optimization'
+    };
+
+    var cy = y + 20;
+    var barWidth = W - 80;
+    var cats = Object.keys(result.categoryPct);
+    for (var i = 0; i < cats.length; i++) {
+      var cat = cats[i];
+      var pct = result.categoryPct[cat];
+      var catColor = getScoreColor(pct);
+
+      doc.setTextColor.apply(doc, gray);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(catLabels[cat] || cat, 28, cy);
+      doc.setTextColor.apply(doc, catColor);
+      doc.text(pct + '%', W - 28, cy, { align: 'right' });
+
+      // Bar background
+      doc.setFillColor(26, 26, 26);
+      doc.roundedRect(28, cy + 1, barWidth, 3, 1.5, 1.5, 'F');
+      // Bar fill
+      var fillWidth = (pct / 100) * barWidth;
+      if (fillWidth > 0) {
+        doc.setFillColor.apply(doc, catColor);
+        doc.roundedRect(28, cy + 1, Math.max(fillWidth, 3), 3, 1.5, 1.5, 'F');
+      }
+
+      cy += 11;
+    }
+
+    // Risks section
+    y = cy + 8;
+    if (result.risks && result.risks.length > 0) {
+      doc.setTextColor(220, 38, 38);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TOP RISKS IDENTIFIED', 20, y);
+      y += 6;
+      doc.setTextColor.apply(doc, gray);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      for (var r = 0; r < Math.min(result.risks.length, 3); r++) {
+        var riskLines = doc.splitTextToSize('• ' + result.risks[r], W - 45);
+        doc.text(riskLines, 24, y);
+        y += riskLines.length * 4.5;
+      }
+      y += 4;
+    }
+
+    // Recommendations section
+    if (result.recs && result.recs.length > 0) {
+      doc.setTextColor.apply(doc, lime);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('OUR RECOMMENDATIONS', 20, y);
+      y += 6;
+      doc.setTextColor.apply(doc, gray);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      for (var rc = 0; rc < Math.min(result.recs.length, 3); rc++) {
+        var recLines = doc.splitTextToSize('• ' + result.recs[rc], W - 45);
+        doc.text(recLines, 24, y);
+        y += recLines.length * 4.5;
+      }
+    }
+
+    // Footer
+    y = 280;
+    doc.setDrawColor(34, 34, 34);
+    doc.line(20, y, W - 20, y);
+    doc.setTextColor.apply(doc, darkGray);
+    doc.setFontSize(8);
+    doc.text('Generated by ApexStack Cloud | apexstackcloud.com', W / 2, y + 6, { align: 'center' });
+    doc.text('Book a strategy session: calendar.app.google/BxDyBrZkGM43fp6L6', W / 2, y + 11, { align: 'center' });
+
+    // Save
+    var filename = 'Cloud-Readiness-Report-' + capture.company.replace(/[^a-zA-Z0-9]/g, '-') + '.pdf';
+    doc.save(filename);
   }
 
   // Init

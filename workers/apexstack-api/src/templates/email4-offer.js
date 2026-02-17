@@ -5,7 +5,7 @@
    architecture review, what they get, CTA
    ============================================ */
 
-export function buildOfferEmail({ name, firstName }) {
+export function buildOfferEmail({ name, firstName, unsubUrl }) {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -159,6 +159,7 @@ export function buildOfferEmail({ name, firstName }) {
                 You're receiving this because you completed our Cloud Readiness Assessment.<br>
                 This is the last email in this series.
               </div>
+              ${unsubUrl ? `<div style="margin-top: 12px;"><a href="${unsubUrl}" style="color: #6b7280; font-size: 11px; text-decoration: underline;">Unsubscribe</a> from future emails</div>` : ''}
             </td>
           </tr>
 

@@ -77,3 +77,52 @@ export async function updateLeadServiceStatus(id, service, status, env) {
     .bind(status, id)
     .run();
 }
+
+/* ============================================
+   Contact Form Queries
+   ============================================ */
+
+export async function insertContactSubmission(data, env) {
+  const db = env.DB;
+  if (!db) return { skipped: true, reason: 'No DB binding configured' };
+
+  const stmt = db.prepare(`
+    INSERT INTO contact_submissions (first_name, last_name, email, company, service_interest, message, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+  `);
+
+  const result = await stmt.bind(
+    data.firstName,
+    data.lastName,
+    data.email,
+    data.company || '',
+    data.serviceInterest || '',
+    data.message || ''
+  ).run();
+
+  return { success: true, id: result.meta?.last_row_id };
+}
+
+/* ============================================
+   Unsubscribe Queries
+   ============================================ */
+
+export async function isUnsubscribed(email, env) {
+  const db = env.DB;
+  if (!db) return false;
+
+  const result = await db.prepare('SELECT id FROM unsubscribes WHERE email = ?')
+    .bind(email)
+    .first();
+
+  return !!result;
+}
+
+export async function insertUnsubscribe(email, token, env) {
+  const db = env.DB;
+  if (!db) return;
+
+  await db.prepare('INSERT OR IGNORE INTO unsubscribes (email, token) VALUES (?, ?)')
+    .bind(email, token)
+    .run();
+}
