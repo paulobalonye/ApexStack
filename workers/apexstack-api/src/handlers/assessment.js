@@ -11,7 +11,7 @@ import { insertLead } from '../db/queries.js';
 
 export async function handleAssessment(body, env, ctx) {
   // Validate required fields
-  const { name, email, company, role, score, level, categoryScores, categoryPct, risks, recs, answers } = body;
+  const { name, email, company, phone, role, score, level, categoryScores, categoryPct, risks, recs, answers } = body;
 
   if (!name || !email || !company || !role || score === undefined) {
     return { success: false, error: 'Missing required fields: name, email, company, role, score' };
@@ -21,6 +21,7 @@ export async function handleAssessment(body, env, ctx) {
     name,
     email,
     company,
+    phone: phone || '',
     role,
     score,
     level: level || 'Unknown',

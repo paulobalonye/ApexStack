@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS leads (
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   company TEXT NOT NULL,
+  phone TEXT DEFAULT '',
   role TEXT NOT NULL,
   score INTEGER NOT NULL,
   level TEXT NOT NULL,

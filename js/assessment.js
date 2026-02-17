@@ -155,9 +155,10 @@ document.addEventListener('DOMContentLoaded', function () {
     var name = document.getElementById('capture-name').value.trim();
     var email = document.getElementById('capture-email').value.trim();
     var company = document.getElementById('capture-company').value.trim();
+    var phone = document.getElementById('capture-phone').value.trim();
     var role = document.getElementById('capture-role').value;
 
-    if (!name || !email || !company || !role) return;
+    if (!name || !email || !company || !phone || !role) return;
 
     // Disable submit button
     var submitBtn = captureForm.querySelector('button[type="submit"]');
@@ -173,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var answersDetail = buildAnswersDetail();
 
     // Send to Worker API (Resend emails + HubSpot CRM + Web3Forms + D1)
-    sendToWorker(name, email, company, role, result, answersDetail);
+    sendToWorker(name, email, company, phone, role, result, answersDetail);
 
     // Show results immediately (don't wait for API)
     showResults(result);
@@ -258,11 +259,12 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ===== SEND TO WORKER API =====
-  function sendToWorker(name, email, company, role, result, answersDetail) {
+  function sendToWorker(name, email, company, phone, role, result, answersDetail) {
     var payload = {
       name: name,
       email: email,
       company: company,
+      phone: phone,
       role: role,
       score: result.score,
       level: result.level.label,

@@ -11,21 +11,22 @@ export async function insertLead(leadData, env) {
     return { skipped: true, reason: 'No DB binding configured' };
   }
 
-  const { name, email, company, role, score, level, categoryScores, risks, recs } = leadData;
+  const { name, email, company, phone, role, score, level, categoryScores, risks, recs } = leadData;
 
   const stmt = db.prepare(`
     INSERT INTO leads (
-      name, email, company, role, score, level,
+      name, email, company, phone, role, score, level,
       category_architecture, category_security, category_deployment,
       category_monitoring, category_cost,
       risks, recommendations, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `);
 
   const result = await stmt.bind(
     name,
     email,
     company,
+    phone || '',
     role,
     score,
     level,

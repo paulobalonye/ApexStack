@@ -14,7 +14,7 @@ export async function createHubSpotContact(leadData, env) {
     return { skipped: true, reason: 'No HUBSPOT_ACCESS_TOKEN configured' };
   }
 
-  const { name, email, company, role, score, level } = leadData;
+  const { name, email, company, phone, role, score, level } = leadData;
   const nameParts = name.trim().split(/\s+/);
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
@@ -25,6 +25,7 @@ export async function createHubSpotContact(leadData, env) {
     firstname: firstName,
     lastname: lastName,
     company: company,
+    phone: phone || '',
     jobtitle: role,
     cloud_readiness_score: String(score),
     cloud_readiness_level: level,

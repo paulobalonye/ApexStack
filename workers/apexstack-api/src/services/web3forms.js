@@ -16,7 +16,7 @@ export async function forwardToWeb3Forms(leadData, env) {
     return { skipped: true, reason: 'No WEB3FORMS_KEY configured' };
   }
 
-  const { name, email, company, role, score, level, categoryScores, categoryPct, risks, recs, answers } = leadData;
+  const { name, email, company, phone, role, score, level, categoryScores, categoryPct, risks, recs, answers } = leadData;
 
   // Build category breakdown
   const CATEGORY_MAX = {
@@ -53,6 +53,7 @@ export async function forwardToWeb3Forms(leadData, env) {
     name: name,
     email: email,
     company: company,
+    phone: phone || '',
     role: role,
     score: `${score}/100`,
     readiness_level: level,
