@@ -2125,6 +2125,64 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0 auto;
 }
 
+/* Resume Banner */
+.resume-banner {
+  background: #111;
+  border: 1px solid var(--lime-on-light);
+  border-radius: var(--radius-lg, 12px);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  animation: fadeInUp 0.5s ease;
+}
+
+.resume-banner-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.resume-banner-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.resume-banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.resume-banner-text p {
+  margin: 0;
+  color: #fff;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.resume-banner-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+.resume-banner-actions .btn {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .assessment-progress {
   width: 100%;
   height: 6px;
@@ -2739,6 +2797,32 @@ h1, h2, h3, h4, h5, h6 {
   .assessment-wrapper {
     max-width: 100%;
     padding: 0;
+  }
+
+  /* Resume Banner Mobile */
+  .resume-banner {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .resume-banner-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .resume-banner-text {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .resume-banner-text p {
+    font-size: 0.875rem;
+  }
+
+  .resume-banner-actions {
+    width: 100%;
+    justify-content: center;
   }
 
   /* Progress */

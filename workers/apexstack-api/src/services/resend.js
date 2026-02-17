@@ -15,6 +15,12 @@ import { isUnsubscribed } from '../db/queries.js';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
+function getFromAddress(env) {
+  const name = env.FROM_NAME || 'ApexStack Cloud';
+  const email = env.FROM_EMAIL || 'hello@apexstackcloud.com';
+  return `${name} <${email}>`;
+}
+
 async function sendEmail(payload, apiKey) {
   const response = await fetch(RESEND_API, {
     method: 'POST',
@@ -47,7 +53,7 @@ function delay(ms) {
 
 export async function sendAssessmentEmails(leadData, env) {
   const apiKey = env.RESEND_API_KEY;
-  const fromEmail = env.FROM_EMAIL || 'ApexStack Cloud <hello@apexstackcloud.com>';
+  const fromEmail = getFromAddress(env);
   const now = new Date();
 
   const { name, email, score, level, categoryScores, categoryPct, risks, recs } = leadData;
@@ -155,7 +161,7 @@ export async function sendAssessmentEmails(leadData, env) {
 
 export async function sendContactConfirmation(contactData, env) {
   const apiKey = env.RESEND_API_KEY;
-  const fromEmail = env.FROM_EMAIL || 'ApexStack Cloud <hello@apexstackcloud.com>';
+  const fromEmail = getFromAddress(env);
 
   if (!apiKey) {
     console.warn('Resend: No API key configured, skipping contact confirmation');
@@ -172,7 +178,7 @@ export async function sendContactConfirmation(contactData, env) {
 
 export async function forwardContactToTeam(contactData, env) {
   const apiKey = env.RESEND_API_KEY;
-  const fromEmail = env.FROM_EMAIL || 'ApexStack Cloud <hello@apexstackcloud.com>';
+  const fromEmail = getFromAddress(env);
   const recipient = env.RECIPIENT_EMAIL || 'info@apexstackcloud.com';
 
   if (!apiKey) {
@@ -196,6 +202,7 @@ export async function forwardContactToTeam(contactData, env) {
       <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Name</td><td style="padding: 8px 0;">${contactData.firstName} ${contactData.lastName}</td></tr>
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Email</td><td style="padding: 8px 0;"><a href="mailto:${contactData.email}">${contactData.email}</a></td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Phone</td><td style="padding: 8px 0;">${contactData.phone ? `<a href="tel:${contactData.phone}">${contactData.phone}</a>` : '—'}</td></tr>
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Company</td><td style="padding: 8px 0;">${contactData.company || '—'}</td></tr>
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Service Interest</td><td style="padding: 8px 0;">${serviceLabel}</td></tr>
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Message</td><td style="padding: 8px 0;">${contactData.message || '—'}</td></tr>

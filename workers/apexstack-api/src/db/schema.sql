@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
   email TEXT NOT NULL,
+  phone TEXT DEFAULT '',
   company TEXT DEFAULT '',
   service_interest TEXT DEFAULT '',
   message TEXT DEFAULT '',

@@ -87,14 +87,15 @@ export async function insertContactSubmission(data, env) {
   if (!db) return { skipped: true, reason: 'No DB binding configured' };
 
   const stmt = db.prepare(`
-    INSERT INTO contact_submissions (first_name, last_name, email, company, service_interest, message, created_at)
-    VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+    INSERT INTO contact_submissions (first_name, last_name, email, phone, company, service_interest, message, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
   `);
 
   const result = await stmt.bind(
     data.firstName,
     data.lastName,
     data.email,
+    data.phone || '',
     data.company || '',
     data.serviceInterest || '',
     data.message || ''

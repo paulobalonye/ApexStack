@@ -76,6 +76,50 @@ document.addEventListener('DOMContentLoaded', function () {
   var currentQuestion = 1;
   var answers = {};
 
+  // ===== LOCAL STORAGE HELPERS =====
+  var STORAGE_KEY = 'apex_assessment_progress';
+  var STORAGE_VERSION = 1;
+  var STORAGE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+  function saveProgress() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        version: STORAGE_VERSION,
+        timestamp: Date.now(),
+        currentQuestion: currentQuestion,
+        answers: answers
+      }));
+    } catch (e) {
+      // Gracefully handle private browsing or quota exceeded
+    }
+  }
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || data.version !== STORAGE_VERSION) return null;
+      if (Date.now() - data.timestamp > STORAGE_TTL) {
+        localStorage.removeItem(STORAGE_KEY);
+        return null;
+      }
+      if (!data.answers || typeof data.answers !== 'object') return null;
+      if (Object.keys(data.answers).length === 0) return null;
+      return data;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function clearProgress() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch (e) {
+      // Gracefully handle
+    }
+  }
+
   // ===== DOM REFS =====
   var questions = document.querySelectorAll('.assessment-question');
   var progressBar = document.getElementById('progress-bar');
@@ -124,6 +168,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var qNum = parseInt(this.name.replace('q', ''));
       answers[qNum] = parseInt(this.value);
       btnNext.disabled = false;
+      saveProgress();
     });
   }
 
@@ -131,6 +176,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (currentQuestion < TOTAL_QUESTIONS) {
       currentQuestion++;
       showQuestion(currentQuestion);
+      saveProgress();
     } else {
       showCapture();
     }
@@ -140,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (currentQuestion > 1) {
       currentQuestion--;
       showQuestion(currentQuestion);
+      saveProgress();
     }
   });
 
@@ -186,6 +233,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Show results immediately (don't wait for API)
     showResults(result);
+
+    // Clear saved progress since assessment is complete
+    clearProgress();
 
     // GA4 event tracking
     if (typeof gtag === 'function') {
@@ -593,7 +643,61 @@ document.addEventListener('DOMContentLoaded', function () {
     doc.save(filename);
   }
 
-  // Init
-  showQuestion(1);
+  // ===== INIT WITH RESUME DETECTION =====
+  var savedProgress = loadProgress();
+  if (savedProgress && Object.keys(savedProgress.answers).length > 0) {
+    // Show resume banner
+    var resumeBanner = document.getElementById('resume-banner');
+    var resumeBtn = document.getElementById('resume-btn');
+    var discardBtn = document.getElementById('discard-btn');
+
+    if (resumeBanner) {
+      resumeBanner.style.display = 'block';
+
+      // Update banner text with question count
+      var answeredCount = Object.keys(savedProgress.answers).length;
+      var bannerText = resumeBanner.querySelector('.resume-banner-text p');
+      if (bannerText) {
+        bannerText.textContent = 'You answered ' + answeredCount + ' of ' + TOTAL_QUESTIONS + ' questions. Pick up where you left off?';
+      }
+
+      resumeBtn.addEventListener('click', function () {
+        // Restore state
+        answers = savedProgress.answers;
+        currentQuestion = savedProgress.currentQuestion || 1;
+
+        // Pre-select radio buttons for all saved answers
+        for (var qNum in answers) {
+          var radio = document.querySelector('input[name="q' + qNum + '"][value="' + answers[qNum] + '"]');
+          if (radio) radio.checked = true;
+        }
+
+        resumeBanner.style.display = 'none';
+        showQuestion(currentQuestion);
+      });
+
+      discardBtn.addEventListener('click', function () {
+        clearProgress();
+        answers = {};
+        currentQuestion = 1;
+        resumeBanner.style.display = 'none';
+        showQuestion(1);
+      });
+
+      // Show Q1 in background while banner is visible
+      showQuestion(1);
+    } else {
+      // Banner element not found, just resume silently
+      answers = savedProgress.answers;
+      currentQuestion = savedProgress.currentQuestion || 1;
+      for (var qNum in answers) {
+        var radio = document.querySelector('input[name="q' + qNum + '"][value="' + answers[qNum] + '"]');
+        if (radio) radio.checked = true;
+      }
+      showQuestion(currentQuestion);
+    }
+  } else {
+    showQuestion(1);
+  }
 
 });

@@ -21,5 +21,6 @@ database_id = "addde47f-75df-4ef5-ac55-580f07a8d2f2"
 
 [vars]
 ENVIRONMENT = "production"
-FROM_EMAIL = "ApexStack Cloud <hello@apexstackcloud.com>"
+FROM_NAME = "ApexStack Cloud"
+FROM_EMAIL = "hello@apexstackcloud.com"
 RECIPIENT_EMAIL = "info@apexstackcloud.com"

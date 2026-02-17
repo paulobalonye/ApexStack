@@ -177,6 +177,7 @@ document.addEventListener('DOMContentLoaded', function () {
       firstName: (document.getElementById('first-name')?.value || '').trim(),
       lastName: (document.getElementById('last-name')?.value || '').trim(),
       email: (document.getElementById('email')?.value || '').trim(),
+      phone: (document.getElementById('phone')?.value || '').trim(),
       company: (document.getElementById('company')?.value || '').trim(),
       serviceInterest: document.getElementById('service-interest')?.value || '',
       message: (document.getElementById('message')?.value || '').trim(),

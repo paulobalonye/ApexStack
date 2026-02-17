@@ -9,7 +9,7 @@ import { createHubSpotContact } from '../services/hubspot.js';
 import { insertContactSubmission } from '../db/queries.js';
 
 export async function handleContact(body, env) {
-  const { firstName, lastName, email, company, serviceInterest, message } = body;
+  const { firstName, lastName, email, phone, company, serviceInterest, message } = body;
 
   // Validate required fields
   if (!firstName || !lastName || !email) {
@@ -20,6 +20,7 @@ export async function handleContact(body, env) {
     firstName: firstName.trim(),
     lastName: lastName.trim(),
     email: email.trim().toLowerCase(),
+    phone: (phone || '').trim(),
     company: (company || '').trim(),
     serviceInterest: serviceInterest || '',
     message: (message || '').trim(),
@@ -52,7 +53,7 @@ export async function handleContact(body, env) {
     name: `${contactData.firstName} ${contactData.lastName}`,
     email: contactData.email,
     company: contactData.company,
-    phone: '',
+    phone: contactData.phone,
     role: contactData.serviceInterest || 'Contact Form',
     score: 0,
     level: 'Contact',
