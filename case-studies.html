@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Case Studies – ApexStack | Fintech, SaaS & Enterprise Cloud Transformations</title>
-  <meta name="description" content="See how ApexStack has helped fintech, SaaS, and mobility companies achieve 47% cost reductions, 12x faster deployments, and 99.99% uptime through cloud engineering.">
+  <meta name="description" content="See how ApexStack has helped fintech and enterprise companies reduce cloud costs, accelerate delivery, and scale infrastructure through cloud engineering.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -94,12 +94,12 @@
     <div class="container">
       <p class="section-label">Case Studies</p>
       <h1>Real Results for Real Companies<span class="dot">.</span></h1>
-      <p>See how ApexStack engineers have helped fintech, SaaS, and mobility companies reduce cloud costs, accelerate delivery, and scale infrastructure to meet explosive growth.</p>
+      <p>See how ApexStack engineers have helped fintech and enterprise companies reduce cloud costs, accelerate delivery, and scale infrastructure to meet explosive growth.</p>
     </div>
   </section>
 
-  <!-- ======== CASE STUDY 1: NovaPay ======== -->
-  <section class="content-section" id="novapay">
+  <!-- ======== CASE STUDY 1: HitchPay ======== -->
+  <section class="content-section" id="hitchpay">
     <div class="container">
       <div class="case-study-header">
         <div class="case-study-meta">
@@ -107,15 +107,15 @@
           <span class="case-study-tag case-study-tag--fintech">Payments</span>
           <span class="case-study-tag case-study-tag--fintech">PCI-DSS</span>
         </div>
-        <h2 class="section-title">NovaPay: Reduced Cloud Costs by 47% While Scaling to 50M Transactions per Month<span class="dot">.</span></h2>
+        <h2 class="section-title">HitchPay: Reduced Cloud Costs by 47% While Scaling to $2M in Transactions Processed<span class="dot">.</span></h2>
       </div>
 
       <div class="case-study-body">
         <h3>The Challenge</h3>
-        <p>NovaPay, a fast-growing African payment processor, was experiencing rapid transaction growth that was outpacing its cloud infrastructure. Their AWS environment had been provisioned reactively over two years, resulting in over-provisioned EC2 instances, unoptimized database configurations, and a monthly cloud bill that was growing 30% faster than revenue. With plans to expand into three new West African markets, they needed infrastructure that could handle 50M+ monthly transactions while maintaining PCI-DSS compliance and sub-10ms payment processing latency.</p>
+        <p>HitchPay, a fast-growing African payment processor, was experiencing rapid transaction growth that was outpacing its cloud infrastructure. Their AWS environment had been provisioned reactively over two years, resulting in over-provisioned EC2 instances, unoptimized database configurations, and a monthly cloud bill that was growing 30% faster than revenue. With plans to expand into three new West African markets, they needed infrastructure that could handle $2M+ in monthly transactions processed while maintaining PCI-DSS compliance and sub-10ms payment processing latency.</p>
 
         <h3>Our Approach</h3>
-        <p>ApexStack embedded a team of three cloud architects and two SRE engineers with NovaPay's infrastructure team for a 16-week engagement. We began with a comprehensive infrastructure audit, mapping every workload, data flow, and cost center across their AWS estate.</p>
+        <p>ApexStack embedded a team of three cloud architects and two SRE engineers with HitchPay's infrastructure team for a 16-week engagement. We began with a comprehensive infrastructure audit, mapping every workload, data flow, and cost center across their AWS estate.</p>
         <ul>
           <li>Migrated payment processing workloads from EC2 to AWS EKS with auto-scaling pod configurations tuned for transaction volume patterns</li>
           <li>Redesigned the database layer with Aurora PostgreSQL read replicas and connection pooling, eliminating the single-database bottleneck</li>
@@ -142,8 +142,8 @@
             <div class="case-study-stat-label">Cloud Cost Reduction</div>
           </div>
           <div class="case-study-stat">
-            <div class="case-study-stat-number">50M+</div>
-            <div class="case-study-stat-label">Monthly Transactions</div>
+            <div class="case-study-stat-number">$2M+</div>
+            <div class="case-study-stat-label">Transactions Processed</div>
           </div>
           <div class="case-study-stat">
             <div class="case-study-stat-number">&lt;8ms</div>
@@ -152,125 +152,7 @@
         </div>
 
         <h3>Results</h3>
-        <p>Within four months, NovaPay's monthly AWS spend dropped from $380K to $201K while simultaneously scaling to handle 50M+ transactions per month. Payment processing latency improved from 45ms to under 8ms. The new infrastructure passed a full PCI-DSS Level 1 audit on the first attempt, and the FinOps dashboards gave NovaPay's finance team real-time visibility into cost allocation by product line for the first time.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======== CASE STUDY 2: CloudMetrics ======== -->
-  <section class="content-section alt-bg" id="cloudmetrics">
-    <div class="container">
-      <div class="case-study-header">
-        <div class="case-study-meta">
-          <span class="case-study-tag case-study-tag--saas">SaaS</span>
-          <span class="case-study-tag case-study-tag--saas">Platform Engineering</span>
-          <span class="case-study-tag case-study-tag--saas">DevOps</span>
-        </div>
-        <h2 class="section-title">CloudMetrics: From Monolith to Microservices &mdash; 12x Faster Deployments<span class="dot">.</span></h2>
-      </div>
-
-      <div class="case-study-body">
-        <h3>The Challenge</h3>
-        <p>CloudMetrics, a B2B observability SaaS platform with 2,000+ enterprise customers, was trapped in a monolithic architecture that made feature development painfully slow. Every code change required a full application deployment, creating a release cycle of once per month with frequent rollbacks. Engineering teams were spending 40% of their time on deployment coordination rather than building product. With Series C funding secured and aggressive growth targets, they needed to ship 10x faster without breaking customer environments.</p>
-
-        <h3>Our Approach</h3>
-        <p>ApexStack deployed a platform engineering squad of four engineers who worked alongside CloudMetrics' development team for 20 weeks. We designed and executed a phased decomposition strategy that allowed the monolith to be broken apart incrementally without any customer-facing downtime.</p>
-        <ul>
-          <li>Decomposed the monolithic application into 14 bounded-context microservices using a strangler fig migration pattern</li>
-          <li>Built a Backstage-powered internal developer portal with self-service environment provisioning, service catalog, and golden path templates</li>
-          <li>Implemented a multi-tenant Kubernetes architecture on GKE with namespace isolation, resource quotas, and tenant-aware auto-scaling</li>
-          <li>Designed a CI/CD pipeline with trunk-based development, feature flags via LaunchDarkly, and canary deployments that roll back automatically on error rate spikes</li>
-          <li>Established service mesh with Istio for inter-service communication, observability, and traffic management</li>
-        </ul>
-
-        <h3>Tech Stack</h3>
-        <div class="tech-stack-list">
-          <span class="tech-tag">Google GKE</span>
-          <span class="tech-tag">Backstage IDP</span>
-          <span class="tech-tag">Istio</span>
-          <span class="tech-tag">ArgoCD</span>
-          <span class="tech-tag">LaunchDarkly</span>
-          <span class="tech-tag">Pulumi</span>
-          <span class="tech-tag">BigQuery</span>
-          <span class="tech-tag">Cloud SQL</span>
-        </div>
-
-        <div class="case-study-stats">
-          <div class="case-study-stat">
-            <div class="case-study-stat-number">12x</div>
-            <div class="case-study-stat-label">Deployment Frequency</div>
-          </div>
-          <div class="case-study-stat">
-            <div class="case-study-stat-number">94%</div>
-            <div class="case-study-stat-label">Fewer Rollbacks</div>
-          </div>
-          <div class="case-study-stat">
-            <div class="case-study-stat-number">0</div>
-            <div class="case-study-stat-label">Customer Downtime</div>
-          </div>
-        </div>
-
-        <h3>Results</h3>
-        <p>CloudMetrics went from deploying once per month to 12 times per day within five months. Rollback incidents dropped by 94% thanks to canary deployments and automated error detection. The Backstage developer portal reduced new service onboarding time from two weeks to under four hours. Engineering teams reported spending 60% more time on feature development and 40% less on infrastructure coordination. Most critically, the entire migration was completed with zero customer-facing downtime.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ======== CASE STUDY 3: RideFleet ======== -->
-  <section class="content-section" id="ridefleet">
-    <div class="container">
-      <div class="case-study-header">
-        <div class="case-study-meta">
-          <span class="case-study-tag case-study-tag--mobility">Mobility</span>
-          <span class="case-study-tag case-study-tag--mobility">Real-Time</span>
-          <span class="case-study-tag case-study-tag--mobility">Multi-Region</span>
-        </div>
-        <h2 class="section-title">RideFleet: Infrastructure for 3M Daily Rides Across 4 Countries<span class="dot">.</span></h2>
-      </div>
-
-      <div class="case-study-body">
-        <h3>The Challenge</h3>
-        <p>RideFleet, a ride-hailing platform operating across Nigeria, Ghana, Kenya, and South Africa, was struggling with infrastructure that couldn't keep pace with exponential rider growth. Their matching algorithm was running on a single-region deployment, causing 500ms+ response times during peak hours and frequent service degradation in markets with less reliable network connectivity. Driver assignment failures during surge periods were costing the company an estimated $2M annually in lost rides, and the platform needed to handle 3M+ daily ride requests with sub-second matching.</p>
-
-        <h3>Our Approach</h3>
-        <p>ApexStack assembled a team of two distributed systems architects and three platform engineers for a 24-week engagement focused on rebuilding RideFleet's core infrastructure for global scale and resilience.</p>
-        <ul>
-          <li>Redesigned the ride-matching engine as an event-driven architecture using Amazon Kinesis for real-time geospatial data streaming and processing</li>
-          <li>Deployed multi-region infrastructure across AWS af-south-1, eu-west-1, and me-south-1 with intelligent traffic routing based on rider location</li>
-          <li>Built a custom auto-scaling framework that predicts demand surges using historical ride data and pre-warms compute capacity 15 minutes ahead of peak periods</li>
-          <li>Implemented a geospatial indexing layer using Redis with H3 hexagonal grid cells for O(1) driver proximity lookups</li>
-          <li>Designed a graceful degradation strategy for low-connectivity markets, with offline-capable driver apps and asynchronous ride confirmation queues</li>
-        </ul>
-
-        <h3>Tech Stack</h3>
-        <div class="tech-stack-list">
-          <span class="tech-tag">Amazon Kinesis</span>
-          <span class="tech-tag">AWS ECS Fargate</span>
-          <span class="tech-tag">Redis Cluster</span>
-          <span class="tech-tag">DynamoDB</span>
-          <span class="tech-tag">Route 53</span>
-          <span class="tech-tag">CloudWatch</span>
-          <span class="tech-tag">Terraform</span>
-          <span class="tech-tag">H3 Geospatial</span>
-        </div>
-
-        <div class="case-study-stats">
-          <div class="case-study-stat">
-            <div class="case-study-stat-number">3M+</div>
-            <div class="case-study-stat-label">Daily Rides Processed</div>
-          </div>
-          <div class="case-study-stat">
-            <div class="case-study-stat-number">&lt;200ms</div>
-            <div class="case-study-stat-label">Ride Matching Latency</div>
-          </div>
-          <div class="case-study-stat">
-            <div class="case-study-stat-number">99.99%</div>
-            <div class="case-study-stat-label">Platform Uptime</div>
-          </div>
-        </div>
-
-        <h3>Results</h3>
-        <p>RideFleet's platform now processes over 3M daily rides across four countries with ride-matching latency under 200ms, down from 500ms+. The predictive auto-scaling framework eliminated surge-period failures entirely, recovering the estimated $2M in previously lost ride revenue. Multi-region deployment reduced latency for African markets by 65%, and the graceful degradation strategy ensured uninterrupted service in areas with intermittent connectivity. RideFleet has since expanded to two additional markets on the same infrastructure without requiring additional architectural changes.</p>
+        <p>Within four months, HitchPay's monthly AWS spend dropped while simultaneously scaling to handle $2M+ in transactions processed. Payment processing latency improved from 45ms to under 8ms. The new infrastructure passed a full PCI-DSS Level 1 audit on the first attempt, and the FinOps dashboards gave HitchPay's finance team real-time visibility into cost allocation by product line for the first time.</p>
       </div>
     </div>
   </section>
