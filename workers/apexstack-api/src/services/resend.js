@@ -1,15 +1,30 @@
 /* ============================================
    Resend Email Service
-   Sends immediate score email + 3 scheduled
-   drip emails using Resend's scheduled_at param
-   Also handles contact form emails
+   - Score-tiered assessment drip sequences
+   - Contact form confirmation + nurture
+   - Re-engagement emails
    ============================================ */
 
+// Yellow tier (existing emails — scores 31-60)
 import { buildScoreEmail } from '../templates/email1-score.js';
 import { buildMistakesEmail } from '../templates/email2-mistakes.js';
 import { buildCaseStudyEmail } from '../templates/email3-casestudy.js';
 import { buildOfferEmail } from '../templates/email4-offer.js';
+
+// Red tier (scores 0-30)
+import { buildRedUrgentEmail } from '../templates/email-red-urgent.js';
+import { buildRedActionEmail } from '../templates/email-red-action.js';
+import { buildRedOfferEmail } from '../templates/email-red-offer.js';
+
+// Green tier (scores 61-100)
+import { buildGreenPartnershipEmail } from '../templates/email-green-partnership.js';
+import { buildGreenAdvancedEmail } from '../templates/email-green-advanced.js';
+
+// Contact form emails
 import { buildContactConfirmationEmail } from '../templates/email-contact-confirmation.js';
+import { buildContactNurture2Email } from '../templates/email-contact-nurture2.js';
+import { buildContactNurture3Email } from '../templates/email-contact-nurture3.js';
+
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
 import { isUnsubscribed } from '../db/queries.js';
 
@@ -51,6 +66,30 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// Generate unsubscribe URL with HMAC token
+async function getUnsubInfo(email, env) {
+  let unsubUrl = '';
+  let unsubHeaders = {};
+  try {
+    const secret = env.UNSUB_SECRET || 'default-unsub-secret';
+    const token = await generateUnsubToken(email, secret);
+    unsubUrl = buildUnsubUrl(email, token);
+    unsubHeaders = {
+      'List-Unsubscribe': `<${unsubUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+    };
+  } catch (err) {
+    console.error('Unsub token generation error:', err);
+  }
+  return { unsubUrl, unsubHeaders };
+}
+
+/* ============================================
+   Assessment Email Sequences (Feature 2)
+   Tiered by score: Red (0-30), Yellow (31-60),
+   Green (61-100)
+   ============================================ */
+
 export async function sendAssessmentEmails(leadData, env) {
   const apiKey = env.RESEND_API_KEY;
   const fromEmail = getFromAddress(env);
@@ -65,24 +104,11 @@ export async function sendAssessmentEmails(leadData, env) {
     return [{ email: 'all', status: 'skipped', reason: 'User unsubscribed' }];
   }
 
-  // Generate unsubscribe token and URL
-  let unsubUrl = '';
-  try {
-    const secret = env.UNSUB_SECRET || 'default-unsub-secret';
-    const token = await generateUnsubToken(email, secret);
-    unsubUrl = buildUnsubUrl(email, token);
-  } catch (err) {
-    console.error('Unsub token generation error:', err);
-  }
+  const { unsubUrl, unsubHeaders } = await getUnsubInfo(email, env);
 
-  const unsubHeaders = unsubUrl ? {
-    'List-Unsubscribe': `<${unsubUrl}>`,
-    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-  } : {};
-
+  // Email 1 is always the score email (all tiers)
   const results = [];
 
-  // Email 1: Immediate — Your Cloud Readiness Score
   try {
     const email1 = await sendEmail({
       from: fromEmail,
@@ -91,68 +117,66 @@ export async function sendAssessmentEmails(leadData, env) {
       html: buildScoreEmail({ name, firstName, score, level, categoryPct, risks, recs, unsubUrl }),
       headers: unsubHeaders,
     }, apiKey);
-    results.push({ email: 1, status: 'sent', id: email1.id });
+    results.push({ email: 1, status: 'sent', id: email1.id, tier: getTier(score) });
   } catch (err) {
     console.error('Email 1 error:', err);
     results.push({ email: 1, status: 'failed', error: err.message });
   }
 
-  // Wait 600ms between sends to respect Resend's 2 req/sec rate limit
   await delay(600);
 
-  // Email 2: Day 2 — 3 Cloud Mistakes
-  try {
-    const email2 = await sendEmail({
-      from: fromEmail,
-      to: [email],
-      subject: `${firstName}, 3 cloud mistakes that cost fintech startups millions`,
-      html: buildMistakesEmail({ name, firstName, unsubUrl }),
-      scheduled_at: addDays(now, 2),
-      headers: unsubHeaders,
-    }, apiKey);
-    results.push({ email: 2, status: 'scheduled', id: email2.id, send_at: addDays(now, 2) });
-  } catch (err) {
-    console.error('Email 2 error:', err);
-    results.push({ email: 2, status: 'failed', error: err.message });
-  }
-
-  await delay(600);
-
-  // Email 3: Day 5 — Case Study
-  try {
-    const email3 = await sendEmail({
-      from: fromEmail,
-      to: [email],
-      subject: 'How a Series B fintech cut cloud costs 47% in 90 days',
-      html: buildCaseStudyEmail({ name, firstName, unsubUrl }),
-      scheduled_at: addDays(now, 5),
-      headers: unsubHeaders,
-    }, apiKey);
-    results.push({ email: 3, status: 'scheduled', id: email3.id, send_at: addDays(now, 5) });
-  } catch (err) {
-    console.error('Email 3 error:', err);
-    results.push({ email: 3, status: 'failed', error: err.message });
-  }
-
-  await delay(600);
-
-  // Email 4: Day 10 — Free Architecture Review
-  try {
-    const email4 = await sendEmail({
-      from: fromEmail,
-      to: [email],
-      subject: `${firstName}, claim your free cloud architecture review`,
-      html: buildOfferEmail({ name, firstName, unsubUrl }),
-      scheduled_at: addDays(now, 10),
-      headers: unsubHeaders,
-    }, apiKey);
-    results.push({ email: 4, status: 'scheduled', id: email4.id, send_at: addDays(now, 10) });
-  } catch (err) {
-    console.error('Email 4 error:', err);
-    results.push({ email: 4, status: 'failed', error: err.message });
+  // Branch based on score tier
+  if (score <= 30) {
+    // RED TIER: Day 0, Day 1, Day 3, Day 7, Day 14
+    await sendTieredEmails(results, fromEmail, email, apiKey, unsubHeaders, now, [
+      { day: 1, subject: `${firstName}, your infrastructure is at critical risk`, html: buildRedUrgentEmail({ name, firstName, score, risks, unsubUrl }) },
+      { day: 3, subject: `${firstName}, 3 things to fix this week`, html: buildRedActionEmail({ name, firstName, unsubUrl }) },
+      { day: 7, subject: 'How a Series B fintech cut cloud costs 47% in 90 days', html: buildCaseStudyEmail({ name, firstName, unsubUrl }) },
+      { day: 14, subject: `${firstName}, exclusive: emergency cloud audit — 50% off`, html: buildRedOfferEmail({ name, firstName, unsubUrl }) },
+    ]);
+  } else if (score <= 60) {
+    // YELLOW TIER: Day 0, Day 2, Day 5, Day 10 (existing flow)
+    await sendTieredEmails(results, fromEmail, email, apiKey, unsubHeaders, now, [
+      { day: 2, subject: `${firstName}, 3 cloud mistakes that cost fintech startups millions`, html: buildMistakesEmail({ name, firstName, unsubUrl }) },
+      { day: 5, subject: 'How a Series B fintech cut cloud costs 47% in 90 days', html: buildCaseStudyEmail({ name, firstName, unsubUrl }) },
+      { day: 10, subject: `${firstName}, claim your free cloud architecture review`, html: buildOfferEmail({ name, firstName, unsubUrl }) },
+    ]);
+  } else {
+    // GREEN TIER: Day 0, Day 3, Day 7
+    await sendTieredEmails(results, fromEmail, email, apiKey, unsubHeaders, now, [
+      { day: 3, subject: `${firstName}, you're ahead of 90% of companies`, html: buildGreenPartnershipEmail({ name, firstName, score, unsubUrl }) },
+      { day: 7, subject: `Next-level: chaos engineering & FinOps`, html: buildGreenAdvancedEmail({ name, firstName, unsubUrl }) },
+    ]);
   }
 
   return results;
+}
+
+function getTier(score) {
+  if (score <= 30) return 'red';
+  if (score <= 60) return 'yellow';
+  return 'green';
+}
+
+async function sendTieredEmails(results, fromEmail, toEmail, apiKey, unsubHeaders, now, emailDefs) {
+  for (let i = 0; i < emailDefs.length; i++) {
+    await delay(600);
+    const def = emailDefs[i];
+    try {
+      const res = await sendEmail({
+        from: fromEmail,
+        to: [toEmail],
+        subject: def.subject,
+        html: def.html,
+        scheduled_at: addDays(now, def.day),
+        headers: unsubHeaders,
+      }, apiKey);
+      results.push({ email: i + 2, status: 'scheduled', id: res.id, send_at: addDays(now, def.day) });
+    } catch (err) {
+      console.error(`Tiered email ${i + 2} (day ${def.day}) error:`, err);
+      results.push({ email: i + 2, status: 'failed', error: err.message });
+    }
+  }
 }
 
 /* ============================================
@@ -174,6 +198,65 @@ export async function sendContactConfirmation(contactData, env) {
     subject: `Thanks for reaching out, ${contactData.firstName}!`,
     html: buildContactConfirmationEmail(contactData),
   }, apiKey);
+}
+
+/* ============================================
+   Contact Nurture Sequence (Feature 3)
+   Day 2: Assessment CTA
+   Day 5: Case study
+   ============================================ */
+
+export async function sendContactNurtureEmails(contactData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  const now = new Date();
+
+  if (!apiKey) return [];
+
+  // Check unsubscribe
+  const unsubbed = await isUnsubscribed(contactData.email, env);
+  if (unsubbed) {
+    return [{ email: 'all', status: 'skipped', reason: 'User unsubscribed' }];
+  }
+
+  const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
+  const results = [];
+
+  // Nurture Email 2: Day 2 — Assessment CTA
+  try {
+    const n2 = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: `${contactData.firstName}, get your free Cloud Readiness Score`,
+      html: buildContactNurture2Email({ firstName: contactData.firstName, unsubUrl }),
+      scheduled_at: addDays(now, 2),
+      headers: unsubHeaders,
+    }, apiKey);
+    results.push({ email: 'nurture-2', status: 'scheduled', id: n2.id, send_at: addDays(now, 2) });
+  } catch (err) {
+    console.error('Contact nurture 2 error:', err);
+    results.push({ email: 'nurture-2', status: 'failed', error: err.message });
+  }
+
+  await delay(600);
+
+  // Nurture Email 3: Day 5 — Case study
+  try {
+    const n3 = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: `How a fintech transformed their cloud in 90 days`,
+      html: buildContactNurture3Email({ firstName: contactData.firstName, unsubUrl }),
+      scheduled_at: addDays(now, 5),
+      headers: unsubHeaders,
+    }, apiKey);
+    results.push({ email: 'nurture-3', status: 'scheduled', id: n3.id, send_at: addDays(now, 5) });
+  } catch (err) {
+    console.error('Contact nurture 3 error:', err);
+    results.push({ email: 'nurture-3', status: 'failed', error: err.message });
+  }
+
+  return results;
 }
 
 export async function forwardContactToTeam(contactData, env) {
@@ -217,4 +300,89 @@ export async function forwardContactToTeam(contactData, env) {
     subject: `New Contact: ${contactData.firstName} ${contactData.lastName} — ${contactData.company || 'No company'}`,
     html: html,
   }, apiKey);
+}
+
+/* ============================================
+   Re-engagement Emails (Feature 7)
+   Called from cron handler
+   ============================================ */
+
+export async function sendReengagementEmail(leadData, type, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+
+  if (!apiKey) return null;
+
+  const unsubbed = await isUnsubscribed(leadData.email, env);
+  if (unsubbed) return { status: 'skipped', reason: 'unsubscribed' };
+
+  const { unsubUrl, unsubHeaders } = await getUnsubInfo(leadData.email, env);
+  const firstName = leadData.name.split(' ')[0];
+
+  let subject, html;
+
+  if (type === 'cold') {
+    subject = `${firstName}, your free cloud review is still available`;
+    html = buildColdReengagementHtml(firstName, unsubUrl);
+  } else {
+    subject = `${firstName}, still thinking about your cloud strategy?`;
+    html = buildWarmReengagementHtml(firstName, leadData.score, unsubUrl);
+  }
+
+  try {
+    const res = await sendEmail({
+      from: fromEmail,
+      to: [leadData.email],
+      subject,
+      html,
+      headers: unsubHeaders,
+    }, apiKey);
+    return { status: 'sent', id: res.id, type };
+  } catch (err) {
+    console.error(`Re-engagement (${type}) error:`, err);
+    return { status: 'failed', error: err.message };
+  }
+}
+
+function buildColdReengagementHtml(firstName, unsubUrl) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #000000;">
+    <tr><td align="center" style="padding: 40px 20px;">
+      <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%;">
+        <tr><td style="padding-bottom: 32px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; color: #000000; font-weight: 800; font-size: 16px; width: 32px; height: 32px; text-align: center; line-height: 32px; border-radius: 6px;">A</td><td style="padding-left: 10px; color: #ffffff; font-size: 18px; font-weight: 700;">ApexStack Cloud</td></tr></table></td></tr>
+        <tr><td style="color: #ffffff; font-size: 24px; font-weight: 700; line-height: 1.3; padding-bottom: 16px;">${firstName}, we haven't heard from you</td></tr>
+        <tr><td style="color: #9ca3af; font-size: 15px; line-height: 1.7; padding-bottom: 24px;">A month ago you took our Cloud Readiness Assessment. Since then, the cloud landscape has continued to evolve &mdash; new security threats, cost optimization strategies, and compliance requirements.</td></tr>
+        <tr><td style="color: #9ca3af; font-size: 15px; line-height: 1.7; padding-bottom: 32px;">Your <strong style="color: #ffffff;">free cloud architecture review</strong> is still available. Our senior engineers have helped dozens of teams transform their infrastructure in just weeks. No sales pitch &mdash; just a clear action plan.</td></tr>
+        <tr><td style="padding-bottom: 40px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; border-radius: 8px;"><a href="https://meetings-na2.hubspot.com/apexstack" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none;">Book Your Free Review</a></td></tr></table></td></tr>
+        <tr><td style="border-top: 1px solid #222222; padding-top: 24px;"><p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 0;">ApexStack Cloud Technologies Limited<br><a href="${unsubUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a></p></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+}
+
+function buildWarmReengagementHtml(firstName, score, unsubUrl) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-color: #000000;">
+    <tr><td align="center" style="padding: 40px 20px;">
+      <table width="600" cellpadding="0" cellspacing="0" role="presentation" style="max-width: 600px; width: 100%;">
+        <tr><td style="padding-bottom: 32px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; color: #000000; font-weight: 800; font-size: 16px; width: 32px; height: 32px; text-align: center; line-height: 32px; border-radius: 6px;">A</td><td style="padding-left: 10px; color: #ffffff; font-size: 18px; font-weight: 700;">ApexStack Cloud</td></tr></table></td></tr>
+        <tr><td style="color: #ffffff; font-size: 24px; font-weight: 700; line-height: 1.3; padding-bottom: 16px;">Still thinking about your cloud strategy?</td></tr>
+        <tr><td style="color: #9ca3af; font-size: 15px; line-height: 1.7; padding-bottom: 24px;">Hi ${firstName}, we noticed you've been reviewing our content. ${score ? `With your Cloud Readiness Score of <strong style="color: #ffffff;">${score}/100</strong>, there` : 'There'} are specific improvements we can help you prioritize.</td></tr>
+        <tr><td style="padding-bottom: 24px;"><table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background: #111111; border-radius: 12px; border: 1px solid #b8e60030;"><tr><td style="padding: 24px;">
+          <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">In a 30-minute call, we can:</p>
+          <p style="color: #9ca3af; font-size: 14px; line-height: 1.8; margin: 0;">&bull; Walk through your specific results<br>&bull; Identify your highest-ROI improvements<br>&bull; Build a 90-day action plan<br>&bull; Answer any cloud infrastructure questions</p>
+        </td></tr></table></td></tr>
+        <tr><td style="padding-bottom: 40px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; border-radius: 8px;"><a href="https://meetings-na2.hubspot.com/apexstack" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none;">Book a Strategy Session</a></td></tr></table></td></tr>
+        <tr><td style="border-top: 1px solid #222222; padding-top: 24px;"><p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 0;">ApexStack Cloud Technologies Limited<br><a href="${unsubUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a></p></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
 }

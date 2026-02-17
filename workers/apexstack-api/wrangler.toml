@@ -19,6 +19,10 @@ database_id = "addde47f-75df-4ef5-ac55-580f07a8d2f2"
 # - HUBSPOT_ACCESS_TOKEN
 # - WEB3FORMS_KEY
 
+# Cron Triggers — Re-engagement emails (daily at 9 AM UTC)
+[triggers]
+crons = ["0 9 * * *"]
+
 [vars]
 ENVIRONMENT = "production"
 FROM_NAME = "ApexStack Cloud"

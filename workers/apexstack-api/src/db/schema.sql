@@ -64,3 +64,20 @@ CREATE TABLE IF NOT EXISTS unsubscribes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_unsub_email ON unsubscribes(email);
+
+-- ============================================
+-- Email Events (Resend Webhooks)
+-- ============================================
+CREATE TABLE IF NOT EXISTS email_events (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  email TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  email_id TEXT,
+  subject TEXT,
+  metadata TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_events_email ON email_events(email);
+CREATE INDEX IF NOT EXISTS idx_events_type ON email_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_events_created ON email_events(created_at);

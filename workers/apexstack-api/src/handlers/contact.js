@@ -4,7 +4,7 @@
    to team, HubSpot contact, D1 database
    ============================================ */
 
-import { sendContactConfirmation, forwardContactToTeam } from '../services/resend.js';
+import { sendContactConfirmation, forwardContactToTeam, sendContactNurtureEmails } from '../services/resend.js';
 import { createHubSpotContact } from '../services/hubspot.js';
 import { insertContactSubmission } from '../db/queries.js';
 
@@ -30,6 +30,7 @@ export async function handleContact(body, env) {
   const results = {
     confirmation: null,
     forward: null,
+    nurture: null,
     hubspot: null,
     database: null,
   };
@@ -47,6 +48,14 @@ export async function handleContact(body, env) {
     .catch(err => {
       console.error('Contact forward email error:', err);
       results.forward = { success: false, error: err.message };
+    });
+
+  // Send nurture drip (Day 2 + Day 5 scheduled emails)
+  const nurturePromise = sendContactNurtureEmails(contactData, env)
+    .then(res => { results.nurture = { success: true, data: res }; })
+    .catch(err => {
+      console.error('Contact nurture email error:', err);
+      results.nurture = { success: false, error: err.message };
     });
 
   const hubspotPromise = createHubSpotContact({
@@ -71,7 +80,7 @@ export async function handleContact(body, env) {
       results.database = { success: false, error: err.message };
     });
 
-  await Promise.all([confirmationPromise, forwardPromise, hubspotPromise, dbPromise]);
+  await Promise.all([confirmationPromise, forwardPromise, nurturePromise, hubspotPromise, dbPromise]);
 
   return {
     success: true,

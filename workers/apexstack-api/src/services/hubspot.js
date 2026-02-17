@@ -1,10 +1,66 @@
 /* ============================================
    HubSpot CRM Service
-   Creates or updates a contact with assessment
-   data, score, and readiness level
+   - Contact creation/update with category scores
+   - Custom property management
+   - Deal pipeline with deduplication
+   - Engagement sync from email events
    ============================================ */
 
 const HUBSPOT_API = 'https://api.hubapi.com';
+
+/* ============================================
+   Custom Properties Setup
+   Creates category score + engagement properties
+   on first use. Idempotent (409 = already exists).
+   ============================================ */
+
+const CUSTOM_PROPERTIES = [
+  // Category score properties (Feature 1)
+  { name: 'cloud_architecture_pct', label: 'Cloud Architecture %', type: 'number', groupName: 'contactinformation', description: 'Architecture & IaC assessment score percentage' },
+  { name: 'cloud_security_pct', label: 'Cloud Security %', type: 'number', groupName: 'contactinformation', description: 'Security & Compliance assessment score percentage' },
+  { name: 'cloud_deployment_pct', label: 'Cloud Deployment %', type: 'number', groupName: 'contactinformation', description: 'Deployment & DevOps assessment score percentage' },
+  { name: 'cloud_monitoring_pct', label: 'Cloud Monitoring %', type: 'number', groupName: 'contactinformation', description: 'Monitoring & Reliability assessment score percentage' },
+  { name: 'cloud_cost_pct', label: 'Cloud Cost %', type: 'number', groupName: 'contactinformation', description: 'Cost Optimization assessment score percentage' },
+  // Engagement properties (Feature 5)
+  { name: 'email_opens_count', label: 'Email Opens', type: 'number', groupName: 'contactinformation', description: 'Total email opens from Resend' },
+  { name: 'email_clicks_count', label: 'Email Clicks', type: 'number', groupName: 'contactinformation', description: 'Total email link clicks from Resend' },
+  { name: 'email_engagement_level', label: 'Email Engagement', type: 'string', groupName: 'contactinformation', description: 'Engagement tier: hot, warm, or cold' },
+];
+
+let propertiesEnsured = false;
+
+export async function ensureCustomProperties(env) {
+  if (propertiesEnsured) return;
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return;
+
+  for (const prop of CUSTOM_PROPERTIES) {
+    try {
+      const res = await fetch(`${HUBSPOT_API}/crm/v3/properties/contacts`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(prop),
+      });
+      if (res.status === 409) {
+        // Property already exists — that's fine
+      } else if (!res.ok) {
+        const err = await res.json();
+        console.warn(`HubSpot: Could not create property ${prop.name}:`, err.message || err);
+      }
+    } catch (err) {
+      console.warn(`HubSpot: Property creation error for ${prop.name}:`, err.message);
+    }
+  }
+  propertiesEnsured = true;
+}
+
+/* ============================================
+   Contact Creation / Update
+   Now includes category % scores
+   ============================================ */
 
 export async function createHubSpotContact(leadData, env) {
   const token = env.HUBSPOT_ACCESS_TOKEN;
@@ -14,12 +70,15 @@ export async function createHubSpotContact(leadData, env) {
     return { skipped: true, reason: 'No HUBSPOT_ACCESS_TOKEN configured' };
   }
 
-  const { name, email, company, phone, role, score, level } = leadData;
+  // Ensure custom properties exist (first call only)
+  await ensureCustomProperties(env);
+
+  const { name, email, company, phone, role, score, level, categoryPct } = leadData;
   const nameParts = name.trim().split(/\s+/);
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
 
-  // First, try to create the contact
+  // Build properties including category scores
   const properties = {
     email: email,
     firstname: firstName,
@@ -32,6 +91,15 @@ export async function createHubSpotContact(leadData, env) {
     lifecyclestage: 'lead',
     hs_lead_status: 'NEW',
   };
+
+  // Add category percentages if available (Feature 1)
+  if (categoryPct) {
+    if (categoryPct.architecture !== undefined) properties.cloud_architecture_pct = String(categoryPct.architecture);
+    if (categoryPct.security !== undefined) properties.cloud_security_pct = String(categoryPct.security);
+    if (categoryPct.deployment !== undefined) properties.cloud_deployment_pct = String(categoryPct.deployment);
+    if (categoryPct.monitoring !== undefined) properties.cloud_monitoring_pct = String(categoryPct.monitoring);
+    if (categoryPct.cost !== undefined) properties.cloud_cost_pct = String(categoryPct.cost);
+  }
 
   // Try create first
   const createResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts`, {
@@ -47,24 +115,32 @@ export async function createHubSpotContact(leadData, env) {
 
   // If contact already exists (409 conflict), update instead
   if (createResponse.status === 409) {
-    // Extract existing contact ID from the error
     const existingId = createData?.message?.match(/Existing ID:\s*(\d+)/)?.[1];
 
     if (existingId) {
+      // Update with all score-related fields
+      const updateProps = {
+        cloud_readiness_score: String(score),
+        cloud_readiness_level: level,
+        company: company,
+        jobtitle: role,
+      };
+      // Also update category scores on update
+      if (categoryPct) {
+        if (categoryPct.architecture !== undefined) updateProps.cloud_architecture_pct = String(categoryPct.architecture);
+        if (categoryPct.security !== undefined) updateProps.cloud_security_pct = String(categoryPct.security);
+        if (categoryPct.deployment !== undefined) updateProps.cloud_deployment_pct = String(categoryPct.deployment);
+        if (categoryPct.monitoring !== undefined) updateProps.cloud_monitoring_pct = String(categoryPct.monitoring);
+        if (categoryPct.cost !== undefined) updateProps.cloud_cost_pct = String(categoryPct.cost);
+      }
+
       const updateResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts/${existingId}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          properties: {
-            cloud_readiness_score: String(score),
-            cloud_readiness_level: level,
-            company: company,
-            jobtitle: role,
-          }
-        }),
+        body: JSON.stringify({ properties: updateProps }),
       });
 
       if (!updateResponse.ok) {
@@ -85,15 +161,55 @@ export async function createHubSpotContact(leadData, env) {
 
 /* ============================================
    HubSpot Deal Pipeline Automation
-   Creates a deal based on assessment score
+   With deduplication (Feature 6)
    ============================================ */
 
+const STAGE_PRIORITY = {
+  'qualifiedtobuy': 1,
+  'presentationscheduled': 2,
+  'decisionmakerboughtin': 3,
+  'contractsent': 4,
+};
+
 function getDealStage(score) {
-  // Default HubSpot pipeline stages
-  if (score <= 30) return 'qualifiedtobuy';          // Qualification
-  if (score <= 60) return 'presentationscheduled';    // Discovery
-  if (score <= 80) return 'decisionmakerboughtin';    // Proposal
-  return 'contractsent';                               // Decision
+  if (score <= 30) return 'qualifiedtobuy';
+  if (score <= 60) return 'presentationscheduled';
+  if (score <= 80) return 'decisionmakerboughtin';
+  return 'contractsent';
+}
+
+async function getExistingDeal(contactId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+
+  try {
+    // Get deals associated with this contact
+    const res = await fetch(
+      `${HUBSPOT_API}/crm/v3/objects/contacts/${contactId}/associations/deals`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) return null;
+    const data = await res.json();
+    const dealIds = data.results?.map(r => r.id) || [];
+
+    if (dealIds.length === 0) return null;
+
+    // Fetch the most recent deal's details
+    const dealRes = await fetch(
+      `${HUBSPOT_API}/crm/v3/objects/deals/${dealIds[0]}?properties=dealstage,dealname`,
+      {
+        headers: { 'Authorization': `Bearer ${token}` },
+      }
+    );
+
+    if (!dealRes.ok) return null;
+    return await dealRes.json();
+  } catch (err) {
+    console.error('HubSpot: Error fetching existing deal:', err);
+    return null;
+  }
 }
 
 export async function createHubSpotDeal(leadData, contactId, env) {
@@ -104,16 +220,54 @@ export async function createHubSpotDeal(leadData, contactId, env) {
   }
 
   const { company, score, level } = leadData;
-
-  const dealProperties = {
-    dealname: `${company} - Cloud Readiness Assessment`,
-    dealstage: getDealStage(score),
-    pipeline: 'default',
-    amount: '30000',
-    description: `Cloud Readiness Score: ${score}/100 (${level}). Auto-created from assessment.`,
-  };
+  const newStage = getDealStage(score);
 
   try {
+    // Feature 6: Check for existing deal to prevent duplicates
+    const existingDeal = await getExistingDeal(contactId, env);
+
+    if (existingDeal) {
+      const currentStage = existingDeal.properties?.dealstage;
+      const currentPriority = STAGE_PRIORITY[currentStage] || 0;
+      const newPriority = STAGE_PRIORITY[newStage] || 0;
+
+      // Only advance stage, never regress
+      if (newPriority > currentPriority) {
+        const updateRes = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals/${existingDeal.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            properties: {
+              dealstage: newStage,
+              description: `Cloud Readiness Score: ${score}/100 (${level}). Updated from reassessment.`,
+            },
+          }),
+        });
+
+        if (!updateRes.ok) {
+          const err = await updateRes.json();
+          console.error('HubSpot deal update error:', err);
+        }
+
+        return { action: 'updated', dealId: existingDeal.id, stage: newStage, previousStage: currentStage };
+      }
+
+      // Stage is same or lower — skip update
+      return { action: 'skipped', dealId: existingDeal.id, stage: currentStage, reason: 'Stage not advanced' };
+    }
+
+    // No existing deal — create a new one
+    const dealProperties = {
+      dealname: `${company} - Cloud Readiness Assessment`,
+      dealstage: newStage,
+      pipeline: 'default',
+      amount: '30000',
+      description: `Cloud Readiness Score: ${score}/100 (${level}). Auto-created from assessment.`,
+    };
+
     const createResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals`, {
       method: 'POST',
       headers: {
@@ -140,9 +294,73 @@ export async function createHubSpotDeal(leadData, contactId, env) {
       console.error('HubSpot deal-contact association error:', assocErr);
     }
 
-    return { dealId: dealData.id, stage: getDealStage(score) };
+    return { action: 'created', dealId: dealData.id, stage: newStage };
   } catch (err) {
-    console.error('HubSpot deal creation error:', err);
+    console.error('HubSpot deal error:', err);
     return { success: false, error: err.message };
+  }
+}
+
+/* ============================================
+   Contact Engagement Sync (Feature 5)
+   Updates HubSpot contact with email engagement
+   data from Resend webhook events
+   ============================================ */
+
+export async function updateContactEngagement(email, engagementData, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return;
+
+  await ensureCustomProperties(env);
+
+  const { opens, clicks, level } = engagementData;
+
+  try {
+    // Search for contact by email
+    const searchRes = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [{
+          filters: [{
+            propertyName: 'email',
+            operator: 'EQ',
+            value: email,
+          }],
+        }],
+        limit: 1,
+      }),
+    });
+
+    if (!searchRes.ok) return;
+    const searchData = await searchRes.json();
+    const contactId = searchData.results?.[0]?.id;
+    if (!contactId) return;
+
+    // Update engagement properties
+    const updateRes = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts/${contactId}`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        properties: {
+          email_opens_count: String(opens || 0),
+          email_clicks_count: String(clicks || 0),
+          email_engagement_level: level || 'cold',
+        },
+      }),
+    });
+
+    if (!updateRes.ok) {
+      const err = await updateRes.json();
+      console.warn('HubSpot engagement update error:', err);
+    }
+  } catch (err) {
+    console.error('HubSpot engagement sync error:', err);
   }
 }

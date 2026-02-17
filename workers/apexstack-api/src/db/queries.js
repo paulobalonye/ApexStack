@@ -127,3 +127,90 @@ export async function insertUnsubscribe(email, token, env) {
     .bind(email, token)
     .run();
 }
+
+/* ============================================
+   Email Events Queries (Feature 4)
+   ============================================ */
+
+export async function insertEmailEvent(data, env) {
+  const db = env.DB;
+  if (!db) return { skipped: true };
+
+  const stmt = db.prepare(`
+    INSERT INTO email_events (email, event_type, email_id, subject, metadata, created_at)
+    VALUES (?, ?, ?, ?, ?, datetime('now'))
+  `);
+
+  const result = await stmt.bind(
+    data.email,
+    data.eventType,
+    data.emailId || '',
+    data.subject || '',
+    data.metadata || ''
+  ).run();
+
+  return { success: true, id: result.meta?.last_row_id };
+}
+
+export async function getEmailEventsByEmail(email, env) {
+  const db = env.DB;
+  if (!db) return [];
+
+  const result = await db.prepare(
+    'SELECT * FROM email_events WHERE email = ? ORDER BY created_at DESC LIMIT 100'
+  ).bind(email).all();
+
+  return result.results || [];
+}
+
+export async function getEngagementStats(email, env) {
+  const db = env.DB;
+  if (!db) return null;
+
+  // Total counts
+  const opens = await db.prepare(
+    "SELECT COUNT(*) as count FROM email_events WHERE email = ? AND event_type = 'email.opened'"
+  ).bind(email).first();
+
+  const clicks = await db.prepare(
+    "SELECT COUNT(*) as count FROM email_events WHERE email = ? AND event_type = 'email.clicked'"
+  ).bind(email).first();
+
+  // Recent counts (last 14 days)
+  const recentOpens = await db.prepare(
+    "SELECT COUNT(*) as count FROM email_events WHERE email = ? AND event_type = 'email.opened' AND created_at >= datetime('now', '-14 days')"
+  ).bind(email).first();
+
+  const recentClicks = await db.prepare(
+    "SELECT COUNT(*) as count FROM email_events WHERE email = ? AND event_type = 'email.clicked' AND created_at >= datetime('now', '-7 days')"
+  ).bind(email).first();
+
+  return {
+    opens: opens?.count || 0,
+    clicks: clicks?.count || 0,
+    recentOpens: recentOpens?.count || 0,
+    recentClicks: recentClicks?.count || 0,
+  };
+}
+
+/* ============================================
+   Re-engagement Queries (Feature 7)
+   ============================================ */
+
+export async function getLeadsForReengagement(daysAgo, env) {
+  const db = env.DB;
+  if (!db) return [];
+
+  // Get leads from ~30 days ago (28-32 day window)
+  const result = await db.prepare(`
+    SELECT l.name, l.email, l.score, l.level, l.created_at
+    FROM leads l
+    WHERE l.created_at BETWEEN datetime('now', '-' || ? || ' days', '-2 days')
+                          AND datetime('now', '-' || ? || ' days', '+2 days')
+      AND l.email NOT IN (SELECT email FROM unsubscribes)
+    ORDER BY l.created_at DESC
+    LIMIT 50
+  `).bind(daysAgo, daysAgo).all();
+
+  return result.results || [];
+}
