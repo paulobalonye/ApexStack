@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---- GA4 Event Tracking ----
   // Track CTA button clicks (Book a Strategy Session)
-  document.querySelectorAll('a[href*="calendar.app.google"]').forEach(function (link) {
+  document.querySelectorAll('a[href*="meetings-na2.hubspot.com"]').forEach(function (link) {
     link.addEventListener('click', function () {
       if (typeof gtag === 'function') {
         gtag('event', 'cta_click', {
