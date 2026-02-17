@@ -1,5 +1,5 @@
 /* ============================================
-   ApexStack - Main JavaScript
+   ApexStack Cloud - Main JavaScript
    ============================================ */
 
 document.addEventListener('DOMContentLoaded', function () {
