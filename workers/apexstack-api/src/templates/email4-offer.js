@@ -142,7 +142,7 @@ export function buildOfferEmail({ name, firstName, unsubUrl }) {
           </tr>
           <tr>
             <td style="padding-bottom: 32px;">
-              <div style="color: #ffffff; font-size: 15px; font-weight: 600;">Amzat Oyetunji</div>
+              <div style="color: #ffffff; font-size: 15px; font-weight: 600;">Amuzat O</div>
               <div style="color: #9ca3af; font-size: 13px;">CTO, ApexStack Cloud</div>
             </td>
           </tr>
