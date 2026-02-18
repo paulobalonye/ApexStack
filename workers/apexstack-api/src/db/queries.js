@@ -105,6 +105,35 @@ export async function insertContactSubmission(data, env) {
 }
 
 /* ============================================
+   Contact Service Status Tracking (Feature 3)
+   ============================================ */
+
+export async function updateContactServiceStatuses(id, statuses, env) {
+  const db = env.DB;
+  if (!db || !id) return;
+
+  const updates = [];
+  const values = [];
+
+  if (statuses.resend !== undefined) {
+    updates.push('resend_status = ?');
+    values.push(statuses.resend);
+  }
+  if (statuses.hubspot !== undefined) {
+    updates.push('hubspot_status = ?');
+    values.push(statuses.hubspot);
+  }
+
+  if (updates.length === 0) return;
+
+  values.push(id);
+
+  await db.prepare(`UPDATE contact_submissions SET ${updates.join(', ')} WHERE id = ?`)
+    .bind(...values)
+    .run();
+}
+
+/* ============================================
    Unsubscribe Queries
    ============================================ */
 
@@ -201,16 +230,25 @@ export async function getLeadsForReengagement(daysAgo, env) {
   const db = env.DB;
   if (!db) return [];
 
-  // Get leads from ~30 days ago (28-32 day window)
+  // Get leads + contact submissions from ~30 days ago (28-32 day window)
+  // UNION ALL includes contact form submitters for re-engagement (Feature 5)
   const result = await db.prepare(`
-    SELECT l.name, l.email, l.score, l.level, l.created_at
-    FROM leads l
-    WHERE l.created_at BETWEEN datetime('now', '-' || ? || ' days', '-2 days')
-                          AND datetime('now', '-' || ? || ' days', '+2 days')
-      AND l.email NOT IN (SELECT email FROM unsubscribes)
-    ORDER BY l.created_at DESC
+    SELECT name, email, score, level, created_at FROM (
+      SELECT l.name, l.email, l.score, l.level, l.created_at
+      FROM leads l
+      WHERE l.created_at BETWEEN datetime('now', '-' || ? || ' days', '-2 days')
+                            AND datetime('now', '-' || ? || ' days', '+2 days')
+        AND l.email NOT IN (SELECT email FROM unsubscribes)
+      UNION ALL
+      SELECT (c.first_name || ' ' || c.last_name) as name, c.email, NULL as score, NULL as level, c.created_at
+      FROM contact_submissions c
+      WHERE c.created_at BETWEEN datetime('now', '-' || ? || ' days', '-2 days')
+                            AND datetime('now', '-' || ? || ' days', '+2 days')
+        AND c.email NOT IN (SELECT email FROM unsubscribes)
+    )
+    ORDER BY created_at DESC
     LIMIT 50
-  `).bind(daysAgo, daysAgo).all();
+  `).bind(daysAgo, daysAgo, daysAgo, daysAgo).all();
 
   return result.results || [];
 }

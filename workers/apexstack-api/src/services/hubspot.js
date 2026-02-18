@@ -25,6 +25,8 @@ const CUSTOM_PROPERTIES = [
   { name: 'email_opens_count', label: 'Email Opens', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Total email opens from Resend' },
   { name: 'email_clicks_count', label: 'Email Clicks', type: 'number', fieldType: 'number', groupName: 'contactinformation', description: 'Total email link clicks from Resend' },
   { name: 'email_engagement_level', label: 'Email Engagement', type: 'string', fieldType: 'text', groupName: 'contactinformation', description: 'Engagement tier: hot, warm, or cold' },
+  // Service interest property (Feature 2 - Contact form gap)
+  { name: 'service_interest', label: 'Service Interest', type: 'string', fieldType: 'text', groupName: 'contactinformation', description: 'Service interest from contact form submission' },
 ];
 
 let propertiesEnsured = false;
@@ -105,6 +107,11 @@ export async function createHubSpotContact(leadData, env) {
     if (categoryPct.cost !== undefined) properties.cloud_cost_pct = String(categoryPct.cost);
   }
 
+  // Add service interest if available (Feature 2 - Contact form gap)
+  if (leadData.serviceInterest) {
+    properties.service_interest = leadData.serviceInterest;
+  }
+
   // Try create first
   const createResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts`, {
     method: 'POST',
@@ -136,6 +143,10 @@ export async function createHubSpotContact(leadData, env) {
         if (categoryPct.deployment !== undefined) updateProps.cloud_deployment_pct = String(categoryPct.deployment);
         if (categoryPct.monitoring !== undefined) updateProps.cloud_monitoring_pct = String(categoryPct.monitoring);
         if (categoryPct.cost !== undefined) updateProps.cloud_cost_pct = String(categoryPct.cost);
+      }
+      // Also update service interest on update
+      if (leadData.serviceInterest) {
+        updateProps.service_interest = leadData.serviceInterest;
       }
 
       const updateResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts/${existingId}`, {
@@ -186,30 +197,31 @@ async function getExistingDeal(contactId, env) {
   const token = env.HUBSPOT_ACCESS_TOKEN;
 
   try {
-    // Get deals associated with this contact
-    const res = await fetch(
-      `${HUBSPOT_API}/crm/v3/objects/contacts/${contactId}/associations/deals`,
-      {
-        headers: { 'Authorization': `Bearer ${token}` },
-      }
-    );
+    // Search for deals associated with this contact
+    const searchRes = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [{
+          filters: [{
+            propertyName: 'associations.contact',
+            operator: 'EQ',
+            value: contactId,
+          }],
+        }],
+        limit: 1,
+        properties: ['dealname', 'dealstage'],
+      }),
+    });
 
-    if (!res.ok) return null;
-    const data = await res.json();
-    const dealIds = data.results?.map(r => r.id) || [];
+    if (!searchRes.ok) return null;
+    const searchData = await searchRes.json();
 
-    if (dealIds.length === 0) return null;
-
-    // Fetch the most recent deal's details
-    const dealRes = await fetch(
-      `${HUBSPOT_API}/crm/v3/objects/deals/${dealIds[0]}?properties=dealstage,dealname`,
-      {
-        headers: { 'Authorization': `Bearer ${token}` },
-      }
-    );
-
-    if (!dealRes.ok) return null;
-    return await dealRes.json();
+    if (!searchData.results || searchData.results.length === 0) return null;
+    return searchData.results[0];
   } catch (err) {
     console.error('HubSpot: Error fetching existing deal:', err);
     return null;
@@ -288,12 +300,20 @@ export async function createHubSpotDeal(leadData, contactId, env) {
 
     const dealData = await createResponse.json();
 
-    // Associate deal with contact
+    // Associate deal with contact (v4 API for reliable association)
     try {
-      await fetch(`${HUBSPOT_API}/crm/v3/objects/deals/${dealData.id}/associations/contacts/${contactId}/3`, {
+      const assocRes = await fetch(`${HUBSPOT_API}/crm/v4/objects/deals/${dealData.id}/associations/contacts/${contactId}`, {
         method: 'PUT',
-        headers: { 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }]),
       });
+      if (!assocRes.ok) {
+        const assocErr = await assocRes.json();
+        console.warn('HubSpot deal-contact association warning:', assocErr);
+      }
     } catch (assocErr) {
       console.error('HubSpot deal-contact association error:', assocErr);
     }
@@ -301,6 +321,93 @@ export async function createHubSpotDeal(leadData, contactId, env) {
     return { action: 'created', dealId: dealData.id, stage: newStage };
   } catch (err) {
     console.error('HubSpot deal error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================
+   HubSpot Deal for Contact Form (Feature 4)
+   Maps serviceInterest → deal stage,
+   skips if any deal already exists (from
+   assessment or prior contact submission)
+   ============================================ */
+
+function getContactDealStage(serviceInterest) {
+  switch (serviceInterest) {
+    case 'cloud-strategy':
+    case 'managed':
+      return 'qualifiedtobuy';
+    case 'migration':
+    case 'modernization':
+      return 'presentationscheduled';
+    default:
+      return 'qualifiedtobuy';
+  }
+}
+
+export async function createContactDeal(contactData, contactId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+
+  if (!token || !contactId) {
+    return { skipped: true, reason: 'No token or contact ID' };
+  }
+
+  const { company, serviceInterest } = contactData;
+  const dealStage = getContactDealStage(serviceInterest);
+
+  try {
+    // Check for any existing deal — don't overwrite assessment deals
+    const existingDeal = await getExistingDeal(contactId, env);
+    if (existingDeal) {
+      return { action: 'skipped', dealId: existingDeal.id, reason: 'Deal already exists' };
+    }
+
+    // Create new deal for contact form inquiry
+    const dealProperties = {
+      dealname: `${company || 'Unknown Company'} - Contact Form Inquiry`,
+      dealstage: dealStage,
+      pipeline: 'default',
+      amount: '15000',
+      description: `Contact form inquiry. Service interest: ${serviceInterest || 'Not specified'}. Auto-created from contact form.`,
+    };
+
+    const createResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ properties: dealProperties }),
+    });
+
+    if (!createResponse.ok) {
+      const err = await createResponse.json();
+      throw new Error(`HubSpot contact deal create failed: ${JSON.stringify(err)}`);
+    }
+
+    const dealData = await createResponse.json();
+
+    // Associate deal with contact (v4 API for reliable association)
+    try {
+      const assocRes = await fetch(`${HUBSPOT_API}/crm/v4/objects/deals/${dealData.id}/associations/contacts/${contactId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }]),
+      });
+      if (!assocRes.ok) {
+        const assocErr = await assocRes.json();
+        console.warn('HubSpot contact deal association warning:', assocErr);
+      }
+    } catch (assocErr) {
+      console.error('HubSpot contact deal-contact association error:', assocErr);
+    }
+
+    return { action: 'created', dealId: dealData.id, stage: dealStage };
+  } catch (err) {
+    console.error('HubSpot contact deal error:', err);
     return { success: false, error: err.message };
   }
 }

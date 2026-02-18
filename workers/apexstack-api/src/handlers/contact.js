@@ -5,8 +5,8 @@
    ============================================ */
 
 import { sendContactConfirmation, forwardContactToTeam, sendContactNurtureEmails } from '../services/resend.js';
-import { createHubSpotContact } from '../services/hubspot.js';
-import { insertContactSubmission } from '../db/queries.js';
+import { createHubSpotContact, createContactDeal } from '../services/hubspot.js';
+import { insertContactSubmission, updateContactServiceStatuses } from '../db/queries.js';
 
 export async function handleContact(body, env) {
   const { firstName, lastName, email, phone, company, serviceInterest, message } = body;
@@ -32,6 +32,7 @@ export async function handleContact(body, env) {
     forward: null,
     nurture: null,
     hubspot: null,
+    deal: null,
     database: null,
   };
 
@@ -50,7 +51,7 @@ export async function handleContact(body, env) {
       results.forward = { success: false, error: err.message };
     });
 
-  // HubSpot + D1 can run concurrently with emails (different APIs)
+  // HubSpot contact + deal (Feature 2: serviceInterest, Feature 4: deal creation)
   const hubspotPromise = createHubSpotContact({
     name: `${contactData.firstName} ${contactData.lastName}`,
     email: contactData.email,
@@ -59,15 +60,33 @@ export async function handleContact(body, env) {
     role: contactData.serviceInterest || 'Contact Form',
     score: 0,
     level: 'Contact',
+    serviceInterest: contactData.serviceInterest,
   }, env)
-    .then(res => { results.hubspot = { success: true, data: res }; })
+    .then(async (res) => {
+      results.hubspot = { success: true, data: res };
+      // Feature 4: Create deal after contact is created/updated
+      if (res.contactId) {
+        try {
+          const dealRes = await createContactDeal(contactData, res.contactId, env);
+          results.deal = { success: true, data: dealRes };
+        } catch (dealErr) {
+          console.error('Contact deal creation error:', dealErr);
+          results.deal = { success: false, error: dealErr.message };
+        }
+      }
+    })
     .catch(err => {
       console.error('HubSpot contact error:', err);
       results.hubspot = { success: false, error: err.message };
     });
 
+  // Feature 3: Capture DB id for service status tracking
+  let contactDbId = null;
   const dbPromise = insertContactSubmission(contactData, env)
-    .then(res => { results.database = { success: true }; })
+    .then(res => {
+      results.database = { success: true };
+      contactDbId = res.id;
+    })
     .catch(err => {
       console.error('D1 contact insert error:', err);
       results.database = { success: false, error: err.message };
@@ -88,6 +107,18 @@ export async function handleContact(body, env) {
     });
 
   await Promise.all([nurturePromise, hubspotPromise, dbPromise]);
+
+  // Feature 3: Update contact submission with service statuses
+  if (contactDbId) {
+    try {
+      await updateContactServiceStatuses(contactDbId, {
+        resend: results.confirmation?.success ? 'sent' : (results.confirmation?.error || 'failed'),
+        hubspot: results.hubspot?.success ? 'synced' : (results.hubspot?.error || 'failed'),
+      }, env);
+    } catch (err) {
+      console.error('Contact status update error:', err);
+    }
+  }
 
   return {
     success: true,

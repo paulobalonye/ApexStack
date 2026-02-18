@@ -24,6 +24,7 @@ import { buildGreenAdvancedEmail } from '../templates/email-green-advanced.js';
 import { buildContactConfirmationEmail } from '../templates/email-contact-confirmation.js';
 import { buildContactNurture2Email } from '../templates/email-contact-nurture2.js';
 import { buildContactNurture3Email } from '../templates/email-contact-nurture3.js';
+import { buildContactNurture4Email } from '../templates/email-contact-nurture4.js';
 
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
 import { isUnsubscribed } from '../db/queries.js';
@@ -254,6 +255,24 @@ export async function sendContactNurtureEmails(contactData, env) {
   } catch (err) {
     console.error('Contact nurture 3 error:', err);
     results.push({ email: 'nurture-3', status: 'failed', error: err.message });
+  }
+
+  await delay(600);
+
+  // Nurture Email 4: Day 10 — Industry trends + soft CTA (Feature 6)
+  try {
+    const n4 = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: `${contactData.firstName}, what companies like yours are doing with cloud`,
+      html: buildContactNurture4Email({ firstName: contactData.firstName, unsubUrl }),
+      scheduled_at: addDays(now, 10),
+      headers: unsubHeaders,
+    }, apiKey);
+    results.push({ email: 'nurture-4', status: 'scheduled', id: n4.id, send_at: addDays(now, 10) });
+  } catch (err) {
+    console.error('Contact nurture 4 error:', err);
+    results.push({ email: 'nurture-4', status: 'failed', error: err.message });
   }
 
   return results;

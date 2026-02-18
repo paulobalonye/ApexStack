@@ -52,6 +52,7 @@ CREATE TABLE IF NOT EXISTS contact_submissions (
 
 CREATE INDEX IF NOT EXISTS idx_contact_email ON contact_submissions(email);
 CREATE INDEX IF NOT EXISTS idx_contact_created ON contact_submissions(created_at);
+CREATE INDEX IF NOT EXISTS idx_contact_service_interest ON contact_submissions(service_interest);
 
 -- ============================================
 -- Email Unsubscribes
