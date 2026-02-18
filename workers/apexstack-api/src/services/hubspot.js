@@ -418,6 +418,77 @@ export async function createContactDeal(contactData, contactId, env) {
 }
 
 /* ============================================
+   HubSpot Deal for Job Application
+   Creates a deal in the Hiring Pipeline
+   with the initial "Application Received" stage
+   ============================================ */
+
+const HIRING_PIPELINE_ID = '2011005672';
+const HIRING_FIRST_STAGE_ID = '3179253494'; // Application Received
+
+const POSITION_LABELS = {
+  'tech-sales': 'Tech Sales Representative',
+  'devops-engineer': 'DevOps Engineer',
+  'customer-success': 'Customer Success Manager',
+  'cloud-architect': 'Cloud Solutions Architect',
+  'security-engineer': 'Security Engineer',
+};
+
+export async function createHiringDeal(applicationData, contactId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token || !contactId) {
+    return { skipped: true, reason: 'No token or contact ID' };
+  }
+
+  const { firstName, lastName, position } = applicationData;
+  const positionLabel = POSITION_LABELS[position] || position;
+
+  try {
+    const dealProperties = {
+      dealname: `${firstName} ${lastName} — ${positionLabel}`,
+      dealstage: HIRING_FIRST_STAGE_ID,
+      pipeline: HIRING_PIPELINE_ID,
+      description: `Job application for ${positionLabel}. LinkedIn: ${applicationData.linkedinUrl || 'N/A'}. Portfolio: ${applicationData.portfolioUrl || 'N/A'}. Auto-created from careers form.`,
+    };
+
+    const createResponse = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ properties: dealProperties }),
+    });
+
+    if (!createResponse.ok) {
+      const err = await createResponse.json();
+      throw new Error(`HubSpot hiring deal create failed: ${JSON.stringify(err)}`);
+    }
+
+    const dealData = await createResponse.json();
+
+    // Associate deal with contact
+    try {
+      await fetch(`${HUBSPOT_API}/crm/v4/objects/deals/${dealData.id}/associations/contacts/${contactId}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify([{ associationCategory: 'HUBSPOT_DEFINED', associationTypeId: 3 }]),
+      });
+    } catch (assocErr) {
+      console.error('HubSpot hiring deal-contact association error:', assocErr);
+    }
+
+    return { action: 'created', dealId: dealData.id, stage: HIRING_FIRST_STAGE_ID, pipeline: HIRING_PIPELINE_ID };
+  } catch (err) {
+    console.error('HubSpot hiring deal error:', err);
+    return { success: false, error: err.message };
+  }
+}
+
+/* ============================================
    Contact Engagement Sync (Feature 5)
    Updates HubSpot contact with email engagement
    data from Resend webhook events
@@ -599,7 +670,7 @@ export async function getDealById(dealId, env) {
 
   try {
     const res = await fetch(
-      `${HUBSPOT_API}/crm/v3/objects/deals/${dealId}?properties=dealname,dealstage,description,amount,closedate`,
+      `${HUBSPOT_API}/crm/v3/objects/deals/${dealId}?properties=dealname,dealstage,pipeline,description,amount,closedate`,
       { headers: { 'Authorization': `Bearer ${token}` } }
     );
 

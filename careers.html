@@ -83,7 +83,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="css/styles.css?v=7">
+  <link rel="stylesheet" href="css/styles.css?v=8">
 </head>
 <body>
 
@@ -237,98 +237,62 @@
       <div class="jobs-grid">
         <div class="job-card">
           <div class="job-info">
-            <h3>Senior Cloud Architect</h3>
+            <h3>Tech Sales Representative</h3>
             <div class="job-meta">
-              <span>&#128205; London</span>
-              <span>&#128187; Engineering</span>
+              <span>&#128205; Remote</span>
+              <span>&#128187; Sales</span>
               <span>&#128336; Full-time</span>
             </div>
           </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
+          <button class="btn btn-outline apply-now-btn" data-position="Tech Sales Representative">Apply Now</button>
         </div>
 
         <div class="job-card">
           <div class="job-info">
             <h3>DevOps Engineer</h3>
             <div class="job-meta">
-              <span>&#128205; New York</span>
+              <span>&#128205; Remote</span>
               <span>&#128187; Engineering</span>
               <span>&#128336; Full-time</span>
             </div>
           </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
+          <button class="btn btn-outline apply-now-btn" data-position="DevOps Engineer">Apply Now</button>
         </div>
 
         <div class="job-card">
           <div class="job-info">
-            <h3>Cloud Security Specialist</h3>
+            <h3>Customer Success Manager</h3>
             <div class="job-meta">
-              <span>&#128205; Berlin</span>
-              <span>&#128187; Security</span>
+              <span>&#128205; Remote</span>
+              <span>&#128187; Client Services</span>
               <span>&#128336; Full-time</span>
             </div>
           </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
+          <button class="btn btn-outline apply-now-btn" data-position="Customer Success Manager">Apply Now</button>
         </div>
 
         <div class="job-card">
           <div class="job-info">
-            <h3>AI/ML Platform Engineer</h3>
-            <div class="job-meta">
-              <span>&#128205; Singapore</span>
-              <span>&#128187; Data &amp; AI</span>
-              <span>&#128336; Full-time</span>
-            </div>
-          </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
-        </div>
-
-        <div class="job-card">
-          <div class="job-info">
-            <h3>Site Reliability Engineer</h3>
+            <h3>Cloud Solutions Architect</h3>
             <div class="job-meta">
               <span>&#128205; Remote</span>
               <span>&#128187; Engineering</span>
               <span>&#128336; Full-time</span>
             </div>
           </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
+          <button class="btn btn-outline apply-now-btn" data-position="Cloud Solutions Architect">Apply Now</button>
         </div>
 
         <div class="job-card">
           <div class="job-info">
-            <h3>Cloud Solutions Consultant</h3>
+            <h3>Security Engineer</h3>
             <div class="job-meta">
-              <span>&#128205; London</span>
-              <span>&#128187; Consulting</span>
+              <span>&#128205; Remote</span>
+              <span>&#128187; Security</span>
               <span>&#128336; Full-time</span>
             </div>
           </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
-        </div>
-
-        <div class="job-card">
-          <div class="job-info">
-            <h3>FinOps Analyst</h3>
-            <div class="job-meta">
-              <span>&#128205; New York</span>
-              <span>&#128187; Finance</span>
-              <span>&#128336; Full-time</span>
-            </div>
-          </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
-        </div>
-
-        <div class="job-card">
-          <div class="job-info">
-            <h3>Technical Account Manager</h3>
-            <div class="job-meta">
-              <span>&#128205; Berlin</span>
-              <span>&#128187; Client Services</span>
-              <span>&#128336; Full-time</span>
-            </div>
-          </div>
-          <a href="contact.html" class="btn btn-outline">Apply Now</a>
+          <button class="btn btn-outline apply-now-btn" data-position="Security Engineer">Apply Now</button>
         </div>
       </div>
     </div>
@@ -355,6 +319,65 @@
       </div>
     </div>
   </section>
+
+  <!-- ======== APPLICATION MODAL ======== -->
+  <div id="application-modal" class="application-modal" style="display: none;">
+    <div class="application-modal-overlay"></div>
+    <div class="application-modal-content">
+      <button class="application-modal-close" aria-label="Close">&times;</button>
+      <h2>Apply for <span id="modal-position-title"></span></h2>
+      <p style="color: #6b7280; margin-bottom: 2rem;">Fill out the form below and our hiring team will review your application.</p>
+      <form id="application-form" action="https://apexstack-api.noreplyhitchafrica.workers.dev/api/apply" method="POST">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="apply-first-name">First Name *</label>
+            <input type="text" id="apply-first-name" class="form-input" placeholder="Enter your first name" required>
+          </div>
+          <div class="form-group">
+            <label for="apply-last-name">Last Name *</label>
+            <input type="text" id="apply-last-name" class="form-input" placeholder="Enter your last name" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="apply-email">Email *</label>
+            <input type="email" id="apply-email" class="form-input" placeholder="you@example.com" required>
+          </div>
+          <div class="form-group">
+            <label for="apply-phone">Phone *</label>
+            <input type="tel" id="apply-phone" class="form-input" placeholder="+1 (555) 000-0000" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="apply-position">Position *</label>
+          <select id="apply-position" class="form-select" required>
+            <option value="">Select a position</option>
+            <option value="tech-sales">Tech Sales Representative</option>
+            <option value="devops-engineer">DevOps Engineer</option>
+            <option value="customer-success">Customer Success Manager</option>
+            <option value="cloud-architect">Cloud Solutions Architect</option>
+            <option value="security-engineer">Security Engineer</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="apply-linkedin">LinkedIn URL *</label>
+            <input type="url" id="apply-linkedin" class="form-input" placeholder="https://linkedin.com/in/yourprofile" required>
+          </div>
+          <div class="form-group">
+            <label for="apply-portfolio">Portfolio / GitHub (Optional)</label>
+            <input type="url" id="apply-portfolio" class="form-input" placeholder="https://github.com/yourprofile">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="apply-cover-letter">Cover Letter</label>
+          <textarea id="apply-cover-letter" class="form-textarea" rows="6" placeholder="Tell us why you're interested in this role and what makes you a great fit..."></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">SUBMIT APPLICATION</button>
+        <p id="apply-form-status" style="margin-top: 1rem; display: none;"></p>
+      </form>
+    </div>
+  </div>
 
   <!-- ======== FOOTER ======== -->
   <footer class="footer">
@@ -416,6 +439,6 @@
   <!-- Scroll to Top -->
   <button class="scroll-top" aria-label="Scroll to top">&#8593;</button>
 
-  <script src="js/main.js?v=7"></script>
+  <script src="js/main.js?v=8"></script>
 </body>
 </html>

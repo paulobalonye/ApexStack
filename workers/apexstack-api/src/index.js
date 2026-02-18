@@ -3,6 +3,7 @@
    Routes:
      POST /api/assessment       — Assessment handler
      POST /api/contact          — Contact form handler
+     POST /api/apply            — Job application handler
      POST /api/webhooks/resend  — Resend email events
      POST /api/webhooks/hubspot — HubSpot meeting + deal stage events
      GET  /api/unsubscribe      — Email unsubscribe
@@ -13,6 +14,7 @@
 
 import { handleAssessment } from './handlers/assessment.js';
 import { handleContact } from './handlers/contact.js';
+import { handleJobApplication } from './handlers/apply.js';
 import { handleResendWebhook } from './handlers/webhook.js';
 import { handleHubSpotWebhook } from './handlers/hubspot-webhook.js';
 import { handleScheduled } from './handlers/cron.js';
@@ -66,6 +68,24 @@ export default {
         });
       } catch (err) {
         console.error('Contact handler error:', err);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Internal server error' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
+    // Route: POST /api/apply
+    if (path === '/api/apply' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const result = await handleJobApplication(body, env);
+        return new Response(JSON.stringify(result), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      } catch (err) {
+        console.error('Application handler error:', err);
         return new Response(
           JSON.stringify({ success: false, error: 'Internal server error' }),
           { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }

@@ -31,6 +31,10 @@ import { buildMeetingBookedEmail } from '../templates/email-meeting-booked.js';
 import { buildNoShowEmail } from '../templates/email-no-show.js';
 import { buildPostMeetingEmail, getEmailSubjectForStage } from '../templates/email-post-meeting.js';
 
+// Hiring emails
+import { buildApplicationConfirmationEmail } from '../templates/email-hiring-confirmation.js';
+import { getHiringEmailSubjectForStage, buildHiringStageEmail } from '../templates/email-hiring-stages.js';
+
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
 import { formatEST } from '../utils/timezone.js';
 import { isUnsubscribed, hasSentEmail, recordSentEmail, getContactInfoByEmail } from '../db/queries.js';
@@ -503,6 +507,120 @@ export async function sendHotLeadAlert(recipientEmail, stats, env) {
     return { status: 'sent', id: result.id };
   } catch (err) {
     console.error('Hot lead alert error:', err);
+    return { status: 'failed', error: err.message };
+  }
+}
+
+/* ============================================
+   Job Application Emails
+   ============================================ */
+
+const POSITION_LABELS = {
+  'tech-sales': 'Tech Sales Representative',
+  'devops-engineer': 'DevOps Engineer',
+  'customer-success': 'Customer Success Manager',
+  'cloud-architect': 'Cloud Solutions Architect',
+  'security-engineer': 'Security Engineer',
+};
+
+export async function sendApplicationConfirmation(applicationData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+
+  if (!apiKey) {
+    console.warn('Resend: No API key configured, skipping application confirmation');
+    return { skipped: true, reason: 'No RESEND_API_KEY configured' };
+  }
+
+  return sendEmail({
+    from: fromEmail,
+    to: [applicationData.email],
+    subject: `Application received — ${applicationData.firstName}, we're excited to review it!`,
+    html: buildApplicationConfirmationEmail(applicationData),
+  }, apiKey);
+}
+
+export async function forwardApplicationToTeam(applicationData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  const recipient = env.RECIPIENT_EMAIL || 'info@apexstackcloud.com';
+
+  if (!apiKey) {
+    console.warn('Resend: No API key configured, skipping application forward');
+    return { skipped: true, reason: 'No RESEND_API_KEY configured' };
+  }
+
+  const positionLabel = POSITION_LABELS[applicationData.position] || applicationData.position;
+
+  const html = `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; padding: 24px;">
+      <h2 style="color: #111;">New Job Application</h2>
+      <div style="display: inline-block; background: #f0fdf4; border: 2px solid #22c55e; border-radius: 12px; padding: 8px 16px; margin-bottom: 16px;">
+        <span style="font-size: 14px; font-weight: 700; color: #22c55e;">NEW APPLICANT</span>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Name</td><td style="padding: 8px 0;">${applicationData.firstName} ${applicationData.lastName}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Position</td><td style="padding: 8px 0; font-weight: 700;">${positionLabel}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Email</td><td style="padding: 8px 0;"><a href="mailto:${applicationData.email}">${applicationData.email}</a></td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Phone</td><td style="padding: 8px 0;">${applicationData.phone ? `<a href="tel:${applicationData.phone}">${applicationData.phone}</a>` : '—'}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">LinkedIn</td><td style="padding: 8px 0;">${applicationData.linkedinUrl ? `<a href="${applicationData.linkedinUrl}" target="_blank">${applicationData.linkedinUrl}</a>` : '—'}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Portfolio/GitHub</td><td style="padding: 8px 0;">${applicationData.portfolioUrl ? `<a href="${applicationData.portfolioUrl}" target="_blank">${applicationData.portfolioUrl}</a>` : '—'}</td></tr>
+      </table>
+      ${applicationData.coverLetter ? `
+      <h3 style="color: #111; margin-top: 24px;">Cover Letter</h3>
+      <div style="padding: 16px; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 8px;">
+        <p style="color: #555; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${applicationData.coverLetter.substring(0, 2000)}</p>
+      </div>` : ''}
+      <p style="color: #888; font-size: 12px; margin-top: 24px;">Submitted at ${formatEST(new Date(applicationData.submittedAt))}</p>
+    </div>
+  `;
+
+  return sendEmail({
+    from: fromEmail,
+    to: [recipient],
+    subject: `New Application: ${applicationData.firstName} ${applicationData.lastName} — ${positionLabel}`,
+    html: html,
+  }, apiKey);
+}
+
+/* ============================================
+   Hiring Stage Follow-Up Email
+   Triggered by deal stage changes in the
+   Hiring Pipeline via HubSpot webhooks
+   ============================================ */
+
+export async function sendHiringStageEmail(contactData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  if (!apiKey) return null;
+
+  const unsubbed = await isUnsubscribed(contactData.email, env);
+  if (unsubbed) return { status: 'skipped', reason: 'unsubscribed' };
+
+  const secret = env.UNSUB_SECRET || 'default-unsub-secret';
+  const token = await generateUnsubToken(contactData.email, secret);
+  const unsubUrl = buildUnsubUrl(contactData.email, token);
+  const unsubHeaders = {
+    'List-Unsubscribe': `<${unsubUrl}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
+
+  try {
+    const res = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: getHiringEmailSubjectForStage(contactData.hiringStage, contactData.firstName),
+      html: buildHiringStageEmail({
+        firstName: contactData.firstName,
+        positionName: contactData.positionName || '',
+        hiringStage: contactData.hiringStage || 'default',
+        unsubUrl,
+      }),
+      headers: unsubHeaders,
+    }, apiKey);
+    return { status: 'sent', id: res.id };
+  } catch (err) {
+    console.error('Hiring stage email error:', err);
     return { status: 'failed', error: err.message };
   }
 }

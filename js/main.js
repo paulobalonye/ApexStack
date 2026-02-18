@@ -221,6 +221,118 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // ---- Application form (Careers page) ----
+  var applicationModal = document.getElementById('application-modal');
+  var applicationForm = document.getElementById('application-form');
+
+  // Open modal when "Apply Now" is clicked
+  document.querySelectorAll('.apply-now-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var position = this.getAttribute('data-position');
+      var positionTitle = document.getElementById('modal-position-title');
+      var positionSelect = document.getElementById('apply-position');
+
+      if (positionTitle) positionTitle.textContent = position;
+
+      // Map position name to select value
+      var positionMap = {
+        'Tech Sales Representative': 'tech-sales',
+        'DevOps Engineer': 'devops-engineer',
+        'Customer Success Manager': 'customer-success',
+        'Cloud Solutions Architect': 'cloud-architect',
+        'Security Engineer': 'security-engineer',
+      };
+
+      if (positionSelect && positionMap[position]) {
+        positionSelect.value = positionMap[position];
+      }
+
+      if (applicationModal) {
+        applicationModal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+      }
+    });
+  });
+
+  // Close modal helpers
+  function closeApplicationModal() {
+    if (applicationModal) {
+      applicationModal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (applicationModal) {
+    var overlay = applicationModal.querySelector('.application-modal-overlay');
+    var closeBtn = applicationModal.querySelector('.application-modal-close');
+    if (overlay) overlay.addEventListener('click', closeApplicationModal);
+    if (closeBtn) closeBtn.addEventListener('click', closeApplicationModal);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && applicationModal && applicationModal.style.display === 'flex') {
+      closeApplicationModal();
+    }
+  });
+
+  // Form submission
+  if (applicationForm) {
+    applicationForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var form = this;
+      var status = document.getElementById('apply-form-status');
+      var submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'SUBMITTING...';
+
+      var payload = {
+        firstName: (document.getElementById('apply-first-name')?.value || '').trim(),
+        lastName: (document.getElementById('apply-last-name')?.value || '').trim(),
+        email: (document.getElementById('apply-email')?.value || '').trim(),
+        phone: (document.getElementById('apply-phone')?.value || '').trim(),
+        position: document.getElementById('apply-position')?.value || '',
+        linkedinUrl: (document.getElementById('apply-linkedin')?.value || '').trim(),
+        portfolioUrl: (document.getElementById('apply-portfolio')?.value || '').trim(),
+        coverLetter: (document.getElementById('apply-cover-letter')?.value || '').trim(),
+      };
+
+      fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(function (response) {
+        return response.json();
+      }).then(function (data) {
+        if (data.success) {
+          status.textContent = data.message || 'Thank you! Your application has been submitted successfully.';
+          status.style.display = 'block';
+          status.style.color = '#b8e600';
+          form.reset();
+          if (typeof gtag === 'function') {
+            gtag('event', 'job_application_submit', {
+              event_category: 'hiring',
+              event_label: payload.position,
+            });
+          }
+          if (typeof fbq === 'function') {
+            fbq('track', 'SubmitApplication');
+          }
+        } else {
+          status.textContent = data.message || 'Something went wrong. Please try again.';
+          status.style.display = 'block';
+          status.style.color = '#e63946';
+        }
+      }).catch(function () {
+        status.textContent = 'Something went wrong. Please try again.';
+        status.style.display = 'block';
+        status.style.color = '#e63946';
+      }).finally(function () {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'SUBMIT APPLICATION';
+      });
+    });
+  }
+
   // ---- Set active nav link based on current page ----
   const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('.nav-link').forEach(function (link) {

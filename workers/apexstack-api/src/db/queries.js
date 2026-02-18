@@ -173,6 +173,58 @@ export async function updateContactServiceStatuses(id, statuses, env) {
 }
 
 /* ============================================
+   Job Application Queries
+   ============================================ */
+
+export async function insertJobApplication(data, env) {
+  const db = env.DB;
+  if (!db) return { skipped: true, reason: 'No DB binding configured' };
+
+  const stmt = db.prepare(`
+    INSERT INTO job_applications (first_name, last_name, email, phone, position, linkedin_url, portfolio_url, cover_letter, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+  `);
+
+  const result = await stmt.bind(
+    data.firstName,
+    data.lastName,
+    data.email,
+    data.phone || '',
+    data.position || '',
+    data.linkedinUrl || '',
+    data.portfolioUrl || '',
+    data.coverLetter || ''
+  ).run();
+
+  return { success: true, id: result.meta?.last_row_id };
+}
+
+export async function updateApplicationServiceStatuses(id, statuses, env) {
+  const db = env.DB;
+  if (!db || !id) return;
+
+  const updates = [];
+  const values = [];
+
+  if (statuses.resend !== undefined) {
+    updates.push('resend_status = ?');
+    values.push(statuses.resend);
+  }
+  if (statuses.hubspot !== undefined) {
+    updates.push('hubspot_status = ?');
+    values.push(statuses.hubspot);
+  }
+
+  if (updates.length === 0) return;
+
+  values.push(id);
+
+  await db.prepare(`UPDATE job_applications SET ${updates.join(', ')} WHERE id = ?`)
+    .bind(...values)
+    .run();
+}
+
+/* ============================================
    Unsubscribe Queries
    ============================================ */
 

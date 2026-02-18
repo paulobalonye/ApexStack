@@ -97,3 +97,25 @@ CREATE TABLE IF NOT EXISTS sent_emails (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_sent_emails_dedup ON sent_emails(email, email_type, reference_key);
 CREATE INDEX IF NOT EXISTS idx_sent_emails_type ON sent_emails(email_type);
 CREATE INDEX IF NOT EXISTS idx_sent_emails_sent ON sent_emails(sent_at);
+
+-- ============================================
+-- Job Applications
+-- ============================================
+CREATE TABLE IF NOT EXISTS job_applications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT DEFAULT '',
+  position TEXT NOT NULL,
+  linkedin_url TEXT DEFAULT '',
+  portfolio_url TEXT DEFAULT '',
+  cover_letter TEXT DEFAULT '',
+  resend_status TEXT,
+  hubspot_status TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_applications_email ON job_applications(email);
+CREATE INDEX IF NOT EXISTS idx_applications_position ON job_applications(position);
+CREATE INDEX IF NOT EXISTS idx_applications_created ON job_applications(created_at);
