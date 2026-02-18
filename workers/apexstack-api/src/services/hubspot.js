@@ -588,6 +588,60 @@ export async function getClosedWonDeals(sinceDaysAgo, env) {
   }
 }
 
+/* ============================================
+   Deal Lookup Helpers
+   For post-meeting webhook handling
+   ============================================ */
+
+export async function getDealById(dealId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return null;
+
+  try {
+    const res = await fetch(
+      `${HUBSPOT_API}/crm/v3/objects/deals/${dealId}?properties=dealname,dealstage,description,amount,closedate`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error('HubSpot: Error fetching deal by ID:', err);
+    return null;
+  }
+}
+
+export async function getContactForDeal(dealId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return null;
+
+  try {
+    // Get contacts associated with this deal
+    const res = await fetch(
+      `${HUBSPOT_API}/crm/v4/objects/deals/${dealId}/associations/contacts`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (!data.results || data.results.length === 0) return null;
+
+    // Get the first associated contact's details
+    const contactId = data.results[0].toObjectId;
+    const contactRes = await fetch(
+      `${HUBSPOT_API}/crm/v3/objects/contacts/${contactId}?properties=firstname,lastname,email,company`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+
+    if (!contactRes.ok) return null;
+    return await contactRes.json();
+  } catch (err) {
+    console.error('HubSpot: Error fetching contact for deal:', err);
+    return null;
+  }
+}
+
 export async function getContactById(contactId, env) {
   const token = env.HUBSPOT_ACCESS_TOKEN;
   if (!token) return null;

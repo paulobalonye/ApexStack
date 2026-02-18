@@ -4,7 +4,7 @@
    from HubSpot webhook subscriptions
    ============================================ */
 
-import { sendMeetingBookedEmail, sendNoShowEmail } from '../services/resend.js';
+import { sendMeetingBookedEmail, sendNoShowEmail, sendPostMeetingEmail } from '../services/resend.js';
 import { hasSentEmail, recordSentEmail } from '../db/queries.js';
 
 /* ============================================
@@ -97,9 +97,13 @@ export async function handleHubSpotWebhook(request, env) {
         // Meeting booked
         const result = await handleMeetingBooked(event, env);
         results.push(result);
+      } else if (subscriptionType === 'deal.propertyChange' && propertyName === 'dealstage') {
+        // Deal stage changed — trigger post-meeting follow-up
+        const result = await handleDealStageChange(event, env);
+        results.push(result);
       } else if (subscriptionType === 'deal.propertyChange') {
-        // Could handle deal stage changes here
-        results.push({ event: subscriptionType, status: 'ignored' });
+        // Other deal property changes — ignore for now
+        results.push({ event: subscriptionType, property: propertyName, status: 'ignored' });
       } else {
         results.push({ event: subscriptionType, status: 'unhandled' });
       }
@@ -155,6 +159,81 @@ async function handleMeetingBooked(event, env) {
   }
 
   return { event: 'meeting-booked', email, ...result };
+}
+
+/* ============================================
+   Deal Stage Change Handler (Post-Meeting)
+   Triggers follow-up email when deal stage
+   changes to a post-meeting stage
+   ============================================ */
+
+// Deal stages that trigger a post-meeting follow-up email
+const POST_MEETING_STAGES = [
+  'presentationscheduled',   // Meeting completed, preparing proposal
+  'decisionmakerboughtin',   // Proposal sent / stakeholder buy-in
+  'contractsent',            // Negotiation / contract phase
+];
+
+async function handleDealStageChange(event, env) {
+  const dealId = String(event.objectId);
+  const newStage = event.propertyValue;
+  const previousStage = event.previousPropertyValue || '';
+
+  console.log(`HubSpot webhook: Deal ${dealId} stage changed from "${previousStage}" to "${newStage}"`);
+
+  // Only send follow-up for qualifying post-meeting stages
+  if (!POST_MEETING_STAGES.includes(newStage)) {
+    return { event: 'deal-stage-change', dealId, stage: newStage, status: 'skipped', reason: 'Stage not a post-meeting trigger' };
+  }
+
+  // Dedup — don't re-send for the same deal + stage combination
+  const referenceKey = `post-meeting-${dealId}-${newStage}`;
+
+  try {
+    // Fetch deal details from HubSpot to get associated contact
+    const { getContactForDeal, getDealById } = await import('../services/hubspot.js');
+
+    const deal = await getDealById(dealId, env);
+    if (!deal) {
+      return { event: 'deal-stage-change', dealId, status: 'skipped', reason: 'Deal not found' };
+    }
+
+    const contact = await getContactForDeal(dealId, env);
+    if (!contact || !contact.properties?.email) {
+      return { event: 'deal-stage-change', dealId, status: 'skipped', reason: 'No associated contact with email' };
+    }
+
+    const email = contact.properties.email;
+    const firstName = contact.properties.firstname || 'there';
+    const companyName = contact.properties.company || deal.properties?.dealname || '';
+
+    // Dedup check
+    const alreadySent = await hasSentEmail(email, 'post-meeting', referenceKey, env);
+    if (alreadySent) {
+      return { event: 'deal-stage-change', dealId, status: 'skipped', reason: 'Already sent for this stage' };
+    }
+
+    // Get meeting summary from deal description if available
+    const meetingSummary = deal.properties?.description || '';
+
+    // Send post-meeting follow-up email
+    const result = await sendPostMeetingEmail({
+      email,
+      firstName,
+      companyName,
+      dealStage: newStage,
+      meetingSummary,
+    }, env);
+
+    if (result?.status === 'sent') {
+      await recordSentEmail(email, 'post-meeting', referenceKey, env);
+    }
+
+    return { event: 'deal-stage-change', dealId, email, stage: newStage, ...result };
+  } catch (err) {
+    console.error(`Deal stage change handler error for deal ${dealId}:`, err);
+    return { event: 'deal-stage-change', dealId, status: 'error', error: err.message };
+  }
 }
 
 /* ============================================

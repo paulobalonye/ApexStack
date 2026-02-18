@@ -29,6 +29,7 @@ import { buildContactNurture4Email } from '../templates/email-contact-nurture4.j
 // Meeting emails
 import { buildMeetingBookedEmail } from '../templates/email-meeting-booked.js';
 import { buildNoShowEmail } from '../templates/email-no-show.js';
+import { buildPostMeetingEmail } from '../templates/email-post-meeting.js';
 
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
 import { isUnsubscribed, hasSentEmail, recordSentEmail } from '../db/queries.js';
@@ -460,6 +461,42 @@ export async function sendNoShowEmail(contactData, env) {
     return { status: 'sent', id: res.id };
   } catch (err) {
     console.error('No-show email error:', err);
+    return { status: 'failed', error: err.message };
+  }
+}
+
+/* ============================================
+   Post-Meeting Follow-Up Email (Feature 12)
+   Triggered by deal stage changes in HubSpot
+   ============================================ */
+
+export async function sendPostMeetingEmail(contactData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  if (!apiKey) return null;
+
+  const unsubbed = await isUnsubscribed(contactData.email, env);
+  if (unsubbed) return { status: 'skipped', reason: 'unsubscribed' };
+
+  const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
+
+  try {
+    const res = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: `Great connecting with you, ${contactData.firstName}!`,
+      html: buildPostMeetingEmail({
+        firstName: contactData.firstName,
+        companyName: contactData.companyName || '',
+        dealStage: contactData.dealStage || 'default',
+        meetingSummary: contactData.meetingSummary || '',
+        unsubUrl,
+      }),
+      headers: unsubHeaders,
+    }, apiKey);
+    return { status: 'sent', id: res.id };
+  } catch (err) {
+    console.error('Post-meeting email error:', err);
     return { status: 'failed', error: err.message };
   }
 }
