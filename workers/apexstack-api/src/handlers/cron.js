@@ -1,5 +1,5 @@
 /* ============================================
-   Cron Dispatcher — Daily at 9 AM UTC
+   Cron Dispatcher — Daily at 9 AM EST (14:00 UTC)
    Runs all email automation tasks:
    1. Re-engagement (existing)
    2. Welcome / onboarding

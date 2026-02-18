@@ -32,6 +32,7 @@ import { buildNoShowEmail } from '../templates/email-no-show.js';
 import { buildPostMeetingEmail, getEmailSubjectForStage } from '../templates/email-post-meeting.js';
 
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
+import { formatEST } from '../utils/timezone.js';
 import { isUnsubscribed, hasSentEmail, recordSentEmail, getContactInfoByEmail } from '../db/queries.js';
 
 const RESEND_API = 'https://api.resend.com/emails';
@@ -314,7 +315,7 @@ export async function forwardContactToTeam(contactData, env) {
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Service Interest</td><td style="padding: 8px 0;">${serviceLabel}</td></tr>
         <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Message</td><td style="padding: 8px 0;">${contactData.message || '—'}</td></tr>
       </table>
-      <p style="color: #888; font-size: 12px;">Submitted at ${contactData.submittedAt}</p>
+      <p style="color: #888; font-size: 12px;">Submitted at ${formatEST(new Date(contactData.submittedAt))}</p>
     </div>
   `;
 
@@ -401,7 +402,7 @@ export async function forwardAssessmentToTeam(leadData, env) {
       <h3 style="color: #111; margin-top: 24px;">Top Risks</h3>
       <ul style="padding-left: 20px; margin: 8px 0;">${risksHtml}</ul>` : ''}
 
-      <p style="color: #888; font-size: 12px; margin-top: 24px;">Submitted at ${leadData.submittedAt || new Date().toISOString()}</p>
+      <p style="color: #888; font-size: 12px; margin-top: 24px;">Submitted at ${formatEST(leadData.submittedAt ? new Date(leadData.submittedAt) : new Date())}</p>
     </div>
   `;
 
@@ -484,7 +485,7 @@ export async function sendHotLeadAlert(recipientEmail, stats, env) {
         <p style="margin: 4px 0 0; color: #92400e;">Reach out within 24 hours while interest is high. Consider a personal email or phone call.</p>
       </div>
 
-      <p style="color: #888; font-size: 12px; margin-top: 24px;">Detected at ${new Date().toISOString()}</p>
+      <p style="color: #888; font-size: 12px; margin-top: 24px;">Detected at ${formatEST()}</p>
     </div>
   `;
 
