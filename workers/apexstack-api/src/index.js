@@ -4,7 +4,7 @@
      POST /api/assessment       — Assessment handler
      POST /api/contact          — Contact form handler
      POST /api/webhooks/resend  — Resend email events
-     POST /api/webhooks/hubspot — HubSpot meeting events
+     POST /api/webhooks/hubspot — HubSpot meeting + deal stage events
      GET  /api/unsubscribe      — Email unsubscribe
      GET  /api/health           — Health check
    Cron:

@@ -1,7 +1,8 @@
 /* ============================================
-   HubSpot Webhook Handler (Features 1, 2)
-   Processes meeting-booked and no-show events
-   from HubSpot webhook subscriptions
+   HubSpot Webhook Handler (Features 1, 2, 12)
+   Processes meeting-booked, no-show, and
+   deal stage change events from HubSpot
+   webhook subscriptions
    ============================================ */
 
 import { sendMeetingBookedEmail, sendNoShowEmail, sendPostMeetingEmail } from '../services/resend.js';
@@ -16,7 +17,7 @@ import { hasSentEmail, recordSentEmail } from '../db/queries.js';
 async function validateSignature(request, body, env) {
   const secret = env.HUBSPOT_CLIENT_SECRET;
   if (!secret) {
-    console.warn('HubSpot webhook: No HUBSPOT_CLIENT_SECRET configured, skipping validation');
+    console.warn('[WEBHOOK] No HUBSPOT_CLIENT_SECRET configured, skipping validation');
     return true; // Allow in dev if secret not set
   }
 
@@ -24,7 +25,7 @@ async function validateSignature(request, body, env) {
   const timestamp = request.headers.get('X-HubSpot-Request-Timestamp');
 
   if (!signature || !timestamp) {
-    console.warn('HubSpot webhook: Missing signature headers');
+    console.warn('[WEBHOOK] Missing signature headers — sig:', !!signature, 'ts:', !!timestamp);
     return false;
   }
 
@@ -32,7 +33,7 @@ async function validateSignature(request, body, env) {
   const now = Date.now();
   const requestTime = parseInt(timestamp, 10);
   if (Math.abs(now - requestTime) > 300000) {
-    console.warn('HubSpot webhook: Timestamp too old');
+    console.warn('[WEBHOOK] Timestamp too old:', Math.abs(now - requestTime), 'ms');
     return false;
   }
 
@@ -40,6 +41,8 @@ async function validateSignature(request, body, env) {
   const method = 'POST';
   const url = request.url;
   const message = `${method}${url}${body}${timestamp}`;
+
+  console.log('[WEBHOOK] Signature validation — request.url:', url);
 
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
@@ -57,8 +60,18 @@ async function validateSignature(request, body, env) {
   );
 
   const computedSig = btoa(String.fromCharCode(...new Uint8Array(signatureBytes)));
+  const match = computedSig === signature;
 
-  return computedSig === signature;
+  if (!match) {
+    console.warn('[WEBHOOK] Signature MISMATCH');
+    console.warn('[WEBHOOK]   request.url used:', url);
+    console.warn('[WEBHOOK]   received sig (first 20):', signature?.substring(0, 20));
+    console.warn('[WEBHOOK]   computed sig (first 20):', computedSig?.substring(0, 20));
+  } else {
+    console.log('[WEBHOOK] Signature valid ✓');
+  }
+
+  return match;
 }
 
 /* ============================================
@@ -66,11 +79,17 @@ async function validateSignature(request, body, env) {
    ============================================ */
 
 export async function handleHubSpotWebhook(request, env) {
+  console.log('[WEBHOOK] ===== Incoming HubSpot webhook =====');
+  console.log('[WEBHOOK] Method:', request.method);
+  console.log('[WEBHOOK] URL:', request.url);
+
   const body = await request.text();
+  console.log('[WEBHOOK] Body length:', body.length, 'chars');
 
   // Validate signature
   const valid = await validateSignature(request, body, env);
   if (!valid) {
+    console.error('[WEBHOOK] ✗ Signature validation FAILED — returning 401');
     return { success: false, error: 'Invalid signature' };
   }
 
@@ -78,6 +97,7 @@ export async function handleHubSpotWebhook(request, env) {
   try {
     events = JSON.parse(body);
   } catch (err) {
+    console.error('[WEBHOOK] ✗ Invalid JSON body');
     return { success: false, error: 'Invalid JSON' };
   }
 
@@ -85,7 +105,10 @@ export async function handleHubSpotWebhook(request, env) {
     events = [events];
   }
 
-  console.log(`HubSpot webhook: Processing ${events.length} event(s)`);
+  console.log(`[WEBHOOK] Processing ${events.length} event(s)`);
+  for (const e of events) {
+    console.log(`[WEBHOOK]   → type: ${e.subscriptionType}, prop: ${e.propertyName}, value: ${e.propertyValue}, objectId: ${e.objectId}`);
+  }
 
   const results = [];
 
@@ -95,20 +118,26 @@ export async function handleHubSpotWebhook(request, env) {
     try {
       if (subscriptionType === 'contact.propertyChange' && propertyName === 'hs_meetings_booked') {
         // Meeting booked
+        console.log(`[WEBHOOK] Handling: meeting booked for contact ${objectId}`);
         const result = await handleMeetingBooked(event, env);
+        console.log('[WEBHOOK] Meeting booked result:', JSON.stringify(result));
         results.push(result);
       } else if (subscriptionType === 'deal.propertyChange' && propertyName === 'dealstage') {
         // Deal stage changed — trigger post-meeting follow-up
+        console.log(`[WEBHOOK] Handling: deal ${objectId} stage → ${propertyValue}`);
         const result = await handleDealStageChange(event, env);
+        console.log('[WEBHOOK] Deal stage change result:', JSON.stringify(result));
         results.push(result);
       } else if (subscriptionType === 'deal.propertyChange') {
         // Other deal property changes — ignore for now
+        console.log(`[WEBHOOK] Ignoring deal property change: ${propertyName}`);
         results.push({ event: subscriptionType, property: propertyName, status: 'ignored' });
       } else {
+        console.log(`[WEBHOOK] Unhandled event type: ${subscriptionType}`);
         results.push({ event: subscriptionType, status: 'unhandled' });
       }
     } catch (err) {
-      console.error(`HubSpot webhook error for event ${subscriptionType}:`, err);
+      console.error(`[WEBHOOK] ✗ Error for ${subscriptionType}:`, err);
       results.push({ event: subscriptionType, status: 'error', error: err.message });
     }
 
@@ -116,6 +145,7 @@ export async function handleHubSpotWebhook(request, env) {
     await new Promise(r => setTimeout(r, 300));
   }
 
+  console.log('[WEBHOOK] ===== Done. Results:', JSON.stringify(results));
   return { success: true, processed: results.length, results };
 }
 
@@ -127,8 +157,6 @@ async function handleMeetingBooked(event, env) {
   const contactId = String(event.objectId);
   const meetingId = event.propertyValue || contactId;
   const referenceKey = `meeting-${meetingId}`;
-
-  console.log(`HubSpot webhook: Meeting booked for contact ${contactId}`);
 
   // Fetch contact details from HubSpot
   const { getContactById } = await import('../services/hubspot.js');
@@ -179,12 +207,15 @@ async function handleDealStageChange(event, env) {
   const newStage = event.propertyValue;
   const previousStage = event.previousPropertyValue || '';
 
-  console.log(`HubSpot webhook: Deal ${dealId} stage changed from "${previousStage}" to "${newStage}"`);
+  console.log(`[DEAL] Deal ${dealId}: "${previousStage}" → "${newStage}"`);
 
   // Only send follow-up for qualifying post-meeting stages
   if (!POST_MEETING_STAGES.includes(newStage)) {
+    console.log(`[DEAL] Stage "${newStage}" is NOT in POST_MEETING_STAGES — skipping`);
     return { event: 'deal-stage-change', dealId, stage: newStage, status: 'skipped', reason: 'Stage not a post-meeting trigger' };
   }
+
+  console.log(`[DEAL] Stage "${newStage}" IS a trigger — proceeding`);
 
   // Dedup — don't re-send for the same deal + stage combination
   const referenceKey = `post-meeting-${dealId}-${newStage}`;
@@ -193,13 +224,18 @@ async function handleDealStageChange(event, env) {
     // Fetch deal details from HubSpot to get associated contact
     const { getContactForDeal, getDealById } = await import('../services/hubspot.js');
 
+    console.log(`[DEAL] Fetching deal ${dealId} from HubSpot...`);
     const deal = await getDealById(dealId, env);
     if (!deal) {
+      console.error(`[DEAL] ✗ Deal ${dealId} NOT found in HubSpot`);
       return { event: 'deal-stage-change', dealId, status: 'skipped', reason: 'Deal not found' };
     }
+    console.log(`[DEAL] Deal found: "${deal.properties?.dealname}"`);
 
+    console.log(`[DEAL] Fetching associated contact for deal ${dealId}...`);
     const contact = await getContactForDeal(dealId, env);
     if (!contact || !contact.properties?.email) {
+      console.error(`[DEAL] ✗ No associated contact with email for deal ${dealId}`);
       return { event: 'deal-stage-change', dealId, status: 'skipped', reason: 'No associated contact with email' };
     }
 
@@ -207,11 +243,15 @@ async function handleDealStageChange(event, env) {
     const firstName = contact.properties.firstname || 'there';
     const companyName = contact.properties.company || deal.properties?.dealname || '';
 
+    console.log(`[DEAL] Contact: ${firstName} <${email}> (${companyName})`);
+
     // Dedup check
     const alreadySent = await hasSentEmail(email, 'post-meeting', referenceKey, env);
     if (alreadySent) {
+      console.log(`[DEAL] ✗ Dedup: already sent for ref="${referenceKey}" — skipping`);
       return { event: 'deal-stage-change', dealId, status: 'skipped', reason: 'Already sent for this stage' };
     }
+    console.log(`[DEAL] Dedup clear — sending post-meeting email...`);
 
     // Get meeting summary from deal description if available
     const meetingSummary = deal.properties?.description || '';
@@ -225,13 +265,16 @@ async function handleDealStageChange(event, env) {
       meetingSummary,
     }, env);
 
+    console.log(`[DEAL] Send result:`, JSON.stringify(result));
+
     if (result?.status === 'sent') {
       await recordSentEmail(email, 'post-meeting', referenceKey, env);
+      console.log(`[DEAL] ✓ Email sent and recorded for ${email}`);
     }
 
     return { event: 'deal-stage-change', dealId, email, stage: newStage, ...result };
   } catch (err) {
-    console.error(`Deal stage change handler error for deal ${dealId}:`, err);
+    console.error(`[DEAL] ✗ Error for deal ${dealId}:`, err);
     return { event: 'deal-stage-change', dealId, status: 'error', error: err.message };
   }
 }
