@@ -317,6 +317,17 @@ h1, h2, h3, h4, h5, h6 {
   transition: var(--transition);
 }
 
+/* Mobile: show hamburger immediately (early rule for fast parse) */
+@media (max-width: 1024px) {
+  .mobile-toggle {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;
+    z-index: 10000 !important;
+  }
+}
+
 /* ============================================
    Hero Section
    ============================================ */
@@ -2624,7 +2635,7 @@ h1, h2, h3, h4, h5, h6 {
 
   /* Hide desktop nav, show mobile toggle */
   .nav-menu-desktop { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; }
-  .mobile-toggle { display: flex !important; }
+  .mobile-toggle { display: flex !important; visibility: visible !important; opacity: 1 !important; position: relative !important; z-index: 10000 !important; }
 
   .header-link-signin,
   .btn-header-dark { display: none !important; }
