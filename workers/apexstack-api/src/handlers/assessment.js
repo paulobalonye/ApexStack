@@ -4,7 +4,7 @@
    Deal pipeline, D1 database
    ============================================ */
 
-import { sendAssessmentEmails } from '../services/resend.js';
+import { sendAssessmentEmails, forwardAssessmentToTeam } from '../services/resend.js';
 import { createHubSpotContact, createHubSpotDeal } from '../services/hubspot.js';
 import { insertLead } from '../db/queries.js';
 
@@ -36,6 +36,7 @@ export async function handleAssessment(body, env, ctx) {
     resend: null,
     hubspot: null,
     database: null,
+    forward: null,
   };
 
   // 1. Send Resend emails (immediate + scheduled drip)
@@ -74,8 +75,16 @@ export async function handleAssessment(body, env, ctx) {
       results.database = { success: false, error: err.message };
     });
 
+  // 4. Forward assessment alert to team
+  const forwardPromise = forwardAssessmentToTeam(leadData, env)
+    .then(res => { results.forward = { success: true, data: res }; })
+    .catch(err => {
+      console.error('Forward to team error:', err);
+      results.forward = { success: false, error: err.message };
+    });
+
   // Wait for all services to complete
-  await Promise.all([resendPromise, hubspotPromise, dbPromise]);
+  await Promise.all([resendPromise, hubspotPromise, dbPromise, forwardPromise]);
 
   // Return success if at least Resend worked
   const overallSuccess = results.resend?.success || false;

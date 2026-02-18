@@ -10,6 +10,7 @@
    7. Holiday greetings
    8. Seasonal quarterly emails
    9. Monthly newsletter
+   10. No-show meeting follow-ups
    ============================================ */
 
 import { getLeadsForReengagement, getEngagementStats } from '../db/queries.js';
@@ -25,6 +26,7 @@ import {
   runHolidayCheck,
   runSeasonalCheck,
   runNewsletterCheck,
+  runNoShowCheck,
 } from './cron-tasks.js';
 
 export async function handleScheduled(env) {
@@ -102,6 +104,14 @@ export async function handleScheduled(env) {
   } catch (err) {
     console.error('Cron: Newsletter task error:', err);
     results.newsletter = { error: err.message };
+  }
+
+  // 10. No-show meeting follow-ups
+  try {
+    results.noShow = await runNoShowCheck(env);
+  } catch (err) {
+    console.error('Cron: No-show task error:', err);
+    results.noShow = { error: err.message };
   }
 
   console.log('Cron: Daily dispatcher complete.', JSON.stringify(results));

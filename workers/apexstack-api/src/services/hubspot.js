@@ -659,3 +659,92 @@ export async function getContactById(contactId, env) {
     return null;
   }
 }
+
+/* ============================================
+   No-Show Meeting Detection
+   Queries HubSpot for meetings with NO_SHOW
+   or CANCELLED outcome in the last 48 hours
+   ============================================ */
+
+export async function getNoShowMeetings(env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return [];
+
+  // 48 hours ago in milliseconds
+  const since = Date.now() - (48 * 60 * 60 * 1000);
+
+  try {
+    const res = await fetch(`${HUBSPOT_API}/crm/v3/objects/meetings/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [
+          {
+            filters: [
+              { propertyName: 'hs_meeting_outcome', operator: 'EQ', value: 'NO_SHOW' },
+              { propertyName: 'hs_meeting_end_time', operator: 'GTE', value: String(since) },
+            ],
+          },
+          {
+            filters: [
+              { propertyName: 'hs_meeting_outcome', operator: 'EQ', value: 'CANCELLED' },
+              { propertyName: 'hs_meeting_end_time', operator: 'GTE', value: String(since) },
+            ],
+          },
+        ],
+        properties: ['hs_meeting_title', 'hs_meeting_outcome', 'hs_meeting_end_time'],
+        limit: 50,
+      }),
+    });
+
+    if (!res.ok) {
+      console.error('HubSpot: No-show meetings search failed:', res.status);
+      return [];
+    }
+
+    const data = await res.json();
+    const meetings = data.results || [];
+
+    if (meetings.length === 0) return [];
+
+    console.log(`HubSpot: Found ${meetings.length} no-show/cancelled meetings`);
+
+    // For each meeting, fetch the associated contact
+    const meetingsWithContacts = [];
+    for (const meeting of meetings) {
+      try {
+        const assocRes = await fetch(
+          `${HUBSPOT_API}/crm/v4/objects/meetings/${meeting.id}/associations/contacts`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+
+        if (!assocRes.ok) continue;
+        const assocData = await assocRes.json();
+
+        if (!assocData.results || assocData.results.length === 0) continue;
+
+        const contactId = assocData.results[0].toObjectId;
+        const contact = await getContactById(contactId, env);
+
+        if (contact && contact.properties?.email) {
+          meetingsWithContacts.push({
+            meetingId: meeting.id,
+            outcome: meeting.properties.hs_meeting_outcome,
+            email: contact.properties.email,
+            firstName: contact.properties.firstname || 'there',
+          });
+        }
+      } catch (err) {
+        console.error(`HubSpot: Error fetching contact for meeting ${meeting.id}:`, err);
+      }
+    }
+
+    return meetingsWithContacts;
+  } catch (err) {
+    console.error('HubSpot: No-show meetings search error:', err);
+    return [];
+  }
+}

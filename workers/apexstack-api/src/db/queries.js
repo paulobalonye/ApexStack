@@ -53,6 +53,45 @@ export async function getLeadByEmail(email, env) {
   return result;
 }
 
+export async function getContactInfoByEmail(email, env) {
+  const db = env.DB;
+  if (!db) return null;
+
+  // Try leads table first (has richer data: name, company, score)
+  const lead = await db.prepare(
+    'SELECT name, email, company, score, level FROM leads WHERE email = ? ORDER BY created_at DESC LIMIT 1'
+  ).bind(email).first();
+
+  if (lead) {
+    return {
+      name: lead.name,
+      email: lead.email,
+      company: lead.company,
+      score: lead.score,
+      level: lead.level,
+      source: 'leads',
+    };
+  }
+
+  // Fall back to contact_submissions
+  const contact = await db.prepare(
+    'SELECT first_name, last_name, email, company FROM contact_submissions WHERE email = ? ORDER BY created_at DESC LIMIT 1'
+  ).bind(email).first();
+
+  if (contact) {
+    return {
+      name: `${contact.first_name} ${contact.last_name}`.trim(),
+      email: contact.email,
+      company: contact.company || '',
+      score: null,
+      level: null,
+      source: 'contact_submissions',
+    };
+  }
+
+  return null;
+}
+
 export async function getRecentLeads(limit, env) {
   const db = env.DB;
   if (!db) return [];

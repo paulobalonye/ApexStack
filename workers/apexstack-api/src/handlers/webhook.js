@@ -6,6 +6,7 @@
 
 import { insertEmailEvent, getEngagementStats } from '../db/queries.js';
 import { updateContactEngagement } from '../services/hubspot.js';
+import { sendHotLeadAlert } from '../services/resend.js';
 
 // Resend events we care about
 const TRACKED_EVENTS = [
@@ -69,6 +70,15 @@ export async function handleResendWebhook(request, env) {
           clicks: stats.clicks,
           level: level,
         }, env);
+
+        // Hot lead escalation alert
+        if (level === 'hot') {
+          try {
+            await sendHotLeadAlert(recipientEmail, stats, env);
+          } catch (alertErr) {
+            console.error('Hot lead alert error:', alertErr);
+          }
+        }
       }
     } catch (err) {
       console.error('HubSpot engagement sync error:', err);

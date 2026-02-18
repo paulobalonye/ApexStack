@@ -32,7 +32,7 @@ import { buildNoShowEmail } from '../templates/email-no-show.js';
 import { buildPostMeetingEmail, getEmailSubjectForStage } from '../templates/email-post-meeting.js';
 
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
-import { isUnsubscribed, hasSentEmail, recordSentEmail } from '../db/queries.js';
+import { isUnsubscribed, hasSentEmail, recordSentEmail, getContactInfoByEmail } from '../db/queries.js';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
@@ -324,6 +324,186 @@ export async function forwardContactToTeam(contactData, env) {
     subject: `New Contact: ${contactData.firstName} ${contactData.lastName} — ${contactData.company || 'No company'}`,
     html: html,
   }, apiKey);
+}
+
+/* ============================================
+   Assessment Alert to Team (Internal)
+   Sends team an immediate notification when
+   someone submits a cloud readiness assessment
+   ============================================ */
+
+export async function forwardAssessmentToTeam(leadData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  const recipient = env.RECIPIENT_EMAIL || 'info@apexstackcloud.com';
+
+  if (!apiKey) {
+    console.warn('Resend: No API key configured, skipping assessment forward');
+    return { skipped: true, reason: 'No RESEND_API_KEY configured' };
+  }
+
+  const { name, email, company, phone, role, score, level, categoryPct, risks } = leadData;
+
+  // Tier-based styling
+  const tierConfig = {
+    red: { emoji: '🔴', label: 'Critical', color: '#ef4444', bgColor: '#fef2f2' },
+    yellow: { emoji: '🟡', label: 'Needs Improvement', color: '#f59e0b', bgColor: '#fffbeb' },
+    green: { emoji: '🟢', label: 'Strong', color: '#22c55e', bgColor: '#f0fdf4' },
+  };
+
+  const tier = score <= 30 ? 'red' : score <= 60 ? 'yellow' : 'green';
+  const config = tierConfig[tier];
+
+  // Build category breakdown rows
+  const categories = [
+    { name: 'Architecture & IaC', pct: categoryPct?.architecture },
+    { name: 'Security & Compliance', pct: categoryPct?.security },
+    { name: 'Deployment & DevOps', pct: categoryPct?.deployment },
+    { name: 'Monitoring & Reliability', pct: categoryPct?.monitoring },
+    { name: 'Cost Optimization', pct: categoryPct?.cost },
+  ];
+
+  const categoryRows = categories
+    .filter(c => c.pct !== undefined)
+    .map(c => `<tr><td style="padding: 6px 0; color: #555;">${c.name}</td><td style="padding: 6px 0; font-weight: 600;">${c.pct}%</td></tr>`)
+    .join('');
+
+  // Build risks list (top 5)
+  const risksHtml = (risks || []).slice(0, 5).map(r =>
+    `<li style="padding: 4px 0; color: #555;">${r}</li>`
+  ).join('');
+
+  const subject = `${config.emoji} ${config.label} Lead: ${name} (${company}) — Score ${score}/100`;
+
+  const html = `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; padding: 24px;">
+      <h2 style="color: #111; margin-bottom: 8px;">New Assessment Submission</h2>
+
+      <div style="display: inline-block; background: ${config.bgColor}; border: 2px solid ${config.color}; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px;">
+        <span style="font-size: 28px; font-weight: 800; color: ${config.color};">${score}</span>
+        <span style="color: ${config.color}; font-size: 14px; font-weight: 600;">/100 &mdash; ${config.label}</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Name</td><td style="padding: 8px 0;">${name}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Email</td><td style="padding: 8px 0;"><a href="mailto:${email}">${email}</a></td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Company</td><td style="padding: 8px 0;">${company}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Phone</td><td style="padding: 8px 0;">${phone ? `<a href="tel:${phone}">${phone}</a>` : '—'}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Role</td><td style="padding: 8px 0;">${role}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Tier</td><td style="padding: 8px 0; font-weight: 700; color: ${config.color};">${level || tier.toUpperCase()}</td></tr>
+      </table>
+
+      ${categoryRows ? `
+      <h3 style="color: #111; margin-top: 24px;">Category Breakdown</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 8px 0;">${categoryRows}</table>` : ''}
+
+      ${risksHtml ? `
+      <h3 style="color: #111; margin-top: 24px;">Top Risks</h3>
+      <ul style="padding-left: 20px; margin: 8px 0;">${risksHtml}</ul>` : ''}
+
+      <p style="color: #888; font-size: 12px; margin-top: 24px;">Submitted at ${leadData.submittedAt || new Date().toISOString()}</p>
+    </div>
+  `;
+
+  return sendEmail({
+    from: fromEmail,
+    to: [recipient],
+    subject,
+    html,
+  }, apiKey);
+}
+
+/* ============================================
+   Hot Lead Escalation Alert (Internal)
+   Fires when a contact reaches "hot" engagement
+   (3+ opens AND 1+ click in 7 days)
+   ============================================ */
+
+export async function sendHotLeadAlert(recipientEmail, stats, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  const recipient = env.RECIPIENT_EMAIL || 'info@apexstackcloud.com';
+
+  if (!apiKey) {
+    console.warn('Resend: No API key configured, skipping hot lead alert');
+    return { skipped: true, reason: 'No RESEND_API_KEY configured' };
+  }
+
+  // Dedup: only alert once per email per day
+  const dateKey = new Date().toISOString().split('T')[0];
+  const referenceKey = `hot-lead-${dateKey}`;
+  const alreadySent = await hasSentEmail(recipientEmail, 'hot-lead-alert', referenceKey, env);
+  if (alreadySent) {
+    return { status: 'skipped', reason: 'Already alerted today' };
+  }
+
+  // Look up contact info from D1 (cheaper than HubSpot API)
+  const contactInfo = await getContactInfoByEmail(recipientEmail, env);
+  const name = contactInfo?.name || 'Unknown';
+  const company = contactInfo?.company || 'Unknown';
+  const score = contactInfo?.score;
+
+  const subject = `🔥 Hot Lead Alert: ${name} (${recipientEmail}) — ${stats.recentOpens} opens, ${stats.recentClicks} clicks`;
+
+  const html = `
+    <div style="font-family: -apple-system, sans-serif; max-width: 600px; padding: 24px;">
+      <h2 style="color: #111; margin-bottom: 4px;">🔥 Hot Lead Detected</h2>
+      <p style="color: #666; margin-top: 0;">This contact is actively engaging with your emails right now.</p>
+
+      <div style="display: inline-block; background: #fef2f2; border: 2px solid #ef4444; border-radius: 12px; padding: 12px 20px; margin-bottom: 20px;">
+        <span style="font-size: 16px; font-weight: 700; color: #ef4444;">HOT LEAD</span>
+      </div>
+
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Name</td><td style="padding: 8px 0;">${name}</td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Email</td><td style="padding: 8px 0;"><a href="mailto:${recipientEmail}">${recipientEmail}</a></td></tr>
+        <tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Company</td><td style="padding: 8px 0;">${company}</td></tr>
+        ${score !== null && score !== undefined ? `<tr><td style="padding: 8px 0; font-weight: 600; color: #555;">Cloud Score</td><td style="padding: 8px 0; font-weight: 700;">${score}/100</td></tr>` : ''}
+      </table>
+
+      <h3 style="color: #111; margin-top: 24px;">Engagement Activity</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 8px 0; background: #f9fafb; border-radius: 8px;">
+        <tr>
+          <td style="padding: 16px; text-align: center; border-right: 1px solid #e5e7eb;">
+            <div style="font-size: 28px; font-weight: 800; color: #111;">${stats.recentOpens}</div>
+            <div style="font-size: 12px; color: #666; text-transform: uppercase;">Recent Opens</div>
+          </td>
+          <td style="padding: 16px; text-align: center; border-right: 1px solid #e5e7eb;">
+            <div style="font-size: 28px; font-weight: 800; color: #111;">${stats.recentClicks}</div>
+            <div style="font-size: 12px; color: #666; text-transform: uppercase;">Recent Clicks</div>
+          </td>
+          <td style="padding: 16px; text-align: center;">
+            <div style="font-size: 28px; font-weight: 800; color: #111;">${stats.opens}</div>
+            <div style="font-size: 12px; color: #666; text-transform: uppercase;">Total Opens</div>
+          </td>
+        </tr>
+      </table>
+
+      <div style="margin-top: 24px; padding: 16px; background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px;">
+        <p style="margin: 0; color: #92400e; font-weight: 600;">Recommended Action:</p>
+        <p style="margin: 4px 0 0; color: #92400e;">Reach out within 24 hours while interest is high. Consider a personal email or phone call.</p>
+      </div>
+
+      <p style="color: #888; font-size: 12px; margin-top: 24px;">Detected at ${new Date().toISOString()}</p>
+    </div>
+  `;
+
+  try {
+    const result = await sendEmail({
+      from: fromEmail,
+      to: [recipient],
+      subject,
+      html,
+    }, apiKey);
+
+    // Record that we sent this alert
+    await recordSentEmail(recipientEmail, 'hot-lead-alert', referenceKey, env);
+
+    return { status: 'sent', id: result.id };
+  } catch (err) {
+    console.error('Hot lead alert error:', err);
+    return { status: 'failed', error: err.message };
+  }
 }
 
 /* ============================================

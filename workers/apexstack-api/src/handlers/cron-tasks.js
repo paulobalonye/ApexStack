@@ -13,7 +13,9 @@ import {
   searchContactsByDateRange,
   getClosedWonDeals,
   getContactById,
+  getNoShowMeetings,
 } from '../services/hubspot.js';
+import { handleNoShow } from './hubspot-webhook.js';
 
 // Templates
 import { buildWelcomeEmail } from '../templates/email-welcome.js';
@@ -545,5 +547,45 @@ export async function runNewsletterCheck(env) {
   } catch (err) {
     console.error('Cron: Newsletter check error:', err);
     return { task: 'newsletter', error: err.message };
+  }
+}
+
+/* ============================================
+   10. No-Show Meeting Follow-Ups
+   Checks HubSpot for meetings with NO_SHOW
+   or CANCELLED outcome in the last 48 hours,
+   sends a follow-up email to each contact
+   ============================================ */
+
+export async function runNoShowCheck(env) {
+  console.log('Cron: Checking for no-show meetings...');
+
+  try {
+    const meetings = await getNoShowMeetings(env);
+    if (!meetings || meetings.length === 0) {
+      console.log('Cron: No no-show meetings found.');
+      return { task: 'no-show', processed: 0 };
+    }
+
+    console.log(`Cron: Found ${meetings.length} no-show/cancelled meetings`);
+    let sent = 0, skipped = 0;
+
+    for (const meeting of meetings) {
+      const result = await handleNoShow(meeting.email, meeting.firstName, env);
+      if (result?.status === 'sent' || result?.id) {
+        sent++;
+      } else {
+        skipped++;
+      }
+
+      // Rate limit between sends
+      await new Promise(r => setTimeout(r, 600));
+    }
+
+    console.log(`Cron: No-show check complete. Sent: ${sent}, Skipped: ${skipped}`);
+    return { task: 'no-show', sent, skipped };
+  } catch (err) {
+    console.error('Cron: No-show check error:', err);
+    return { task: 'no-show', error: err.message };
   }
 }
