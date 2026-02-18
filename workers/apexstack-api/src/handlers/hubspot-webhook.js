@@ -195,11 +195,15 @@ async function handleMeetingBooked(event, env) {
    changes to a post-meeting stage
    ============================================ */
 
-// Deal stages that trigger a post-meeting follow-up email
-const POST_MEETING_STAGES = [
-  'presentationscheduled',   // Meeting completed, preparing proposal
-  'decisionmakerboughtin',   // Proposal sent / stakeholder buy-in
-  'contractsent',            // Negotiation / contract phase
+// Deal stages that trigger a follow-up email
+const DEAL_EMAIL_STAGES = [
+  'appointmentscheduled',    // Consultation confirmed — meeting prep tips
+  'qualifiedtobuy',          // New lead — welcome + intro to services
+  'presentationscheduled',   // Meeting completed — thank you + proposal prep
+  'decisionmakerboughtin',   // Proposal sent — review + stakeholder sharing
+  'contractsent',            // Negotiation — contract review next steps
+  'closedwon',               // Won — welcome aboard + onboarding kickoff
+  'closedlost',              // Lost — graceful exit + door open
 ];
 
 async function handleDealStageChange(event, env) {
@@ -210,8 +214,8 @@ async function handleDealStageChange(event, env) {
   console.log(`[DEAL] Deal ${dealId}: "${previousStage}" → "${newStage}"`);
 
   // Only send follow-up for qualifying post-meeting stages
-  if (!POST_MEETING_STAGES.includes(newStage)) {
-    console.log(`[DEAL] Stage "${newStage}" is NOT in POST_MEETING_STAGES — skipping`);
+  if (!DEAL_EMAIL_STAGES.includes(newStage)) {
+    console.log(`[DEAL] Stage "${newStage}" is NOT in DEAL_EMAIL_STAGES — skipping`);
     return { event: 'deal-stage-change', dealId, stage: newStage, status: 'skipped', reason: 'Stage not a post-meeting trigger' };
   }
 

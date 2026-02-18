@@ -4,6 +4,11 @@
    to a post-meeting stage in HubSpot
    ============================================ */
 
+export function getEmailSubjectForStage(dealStage, firstName) {
+  const content = getStageContent(dealStage, firstName);
+  return content.subject;
+}
+
 export function buildPostMeetingEmail({ firstName, companyName, dealStage, meetingSummary, unsubUrl }) {
   const schedulerLink = 'http://meeting.apexstackcloud.com/meetings/apexstack';
 
@@ -134,9 +139,39 @@ export function buildPostMeetingEmail({ firstName, companyName, dealStage, meeti
 
 function getStageContent(dealStage, firstName) {
   switch (dealStage) {
+    case 'appointmentscheduled':
+      return {
+        subject: `Your consultation is confirmed, ${firstName}!`,
+        heading: `Your consultation is confirmed, ${firstName}!`,
+        intro: `We're looking forward to connecting with you! Your strategy session with ApexStack Cloud has been scheduled and our team is preparing to make the most of our time together.`,
+        nextSteps: [
+          'Have a rough sketch of your current cloud architecture handy (even bullet points help)',
+          'Think about your top 3 cloud challenges or goals you\'d like to address',
+          'Know your approximate monthly cloud spend (a ballpark is fine)',
+          'Jot down any questions you\'d like answered during our call',
+        ],
+        closing: `Don't worry if you don't have everything prepared &mdash; we'll guide the conversation and make sure we cover what matters most to you. See you soon!`,
+        ctaText: 'View Meeting Details',
+      };
+
+    case 'qualifiedtobuy':
+      return {
+        subject: `Welcome to ApexStack Cloud, ${firstName}`,
+        heading: `Welcome to ApexStack Cloud, ${firstName}!`,
+        intro: `Thank you for your interest in ApexStack Cloud. We help companies like yours transform their cloud infrastructure &mdash; cutting costs, strengthening security, and accelerating deployments. We'd love to learn more about your specific needs.`,
+        nextSteps: [
+          'Take our free <a href="https://apexstackcloud.com/assessment" style="color: #b8e600; text-decoration: none;">Cloud Readiness Assessment</a> to see where you stand',
+          'A member of our team will reach out to schedule an introductory call',
+          'In the meantime, explore our <a href="https://apexstackcloud.com/services" style="color: #b8e600; text-decoration: none;">services</a> and <a href="https://apexstackcloud.com/case-studies" style="color: #b8e600; text-decoration: none;">case studies</a>',
+        ],
+        closing: `We're excited about the possibility of working together. If you have any immediate questions, just reply to this email &mdash; we typically respond within a few hours.`,
+        ctaText: 'Take Free Assessment',
+      };
+
     case 'presentationscheduled':
     case 'meeting_completed':
       return {
+        subject: `Great connecting with you, ${firstName}!`,
         heading: `Great connecting with you, ${firstName}!`,
         intro: `Thank you for taking the time to meet with us today. We truly enjoyed learning about your cloud infrastructure goals and challenges. Our team is already putting together tailored recommendations based on our conversation.`,
         nextSteps: [
@@ -151,6 +186,7 @@ function getStageContent(dealStage, firstName) {
     case 'decisionmakerboughtin':
     case 'proposal_sent':
       return {
+        subject: `Your proposal is on its way, ${firstName}!`,
         heading: `Your proposal is on its way, ${firstName}!`,
         intro: `Thank you for the productive conversation today. As discussed, we're finalizing a detailed proposal that covers everything we talked about &mdash; from architecture recommendations to implementation timelines and investment.`,
         nextSteps: [
@@ -165,6 +201,7 @@ function getStageContent(dealStage, firstName) {
     case 'contractsent':
     case 'negotiation':
       return {
+        subject: `Almost there, ${firstName}!`,
         heading: `Almost there, ${firstName}!`,
         intro: `Thank you for today's discussion. We're excited about the alignment between your goals and what ApexStack Cloud can deliver. As a next step, we're preparing the contract details based on what we agreed upon.`,
         nextSteps: [
@@ -176,9 +213,39 @@ function getStageContent(dealStage, firstName) {
         ctaText: 'Schedule a Quick Chat',
       };
 
-    default:
-      // Generic post-meeting follow-up
+    case 'closedwon':
       return {
+        subject: `Welcome aboard, ${firstName}!`,
+        heading: `Welcome aboard, ${firstName}!`,
+        intro: `We're thrilled to officially welcome you to the ApexStack Cloud family! This is the beginning of an exciting journey, and our team is ready to hit the ground running to deliver real results for your organization.`,
+        nextSteps: [
+          'Your dedicated project manager will reach out within 24 hours to schedule the onboarding kickoff',
+          'We\'ll conduct an initial technical deep dive into your current infrastructure',
+          'You\'ll receive access to our client portal with project tracking and documentation',
+          'Our team will prepare a 90-day implementation roadmap tailored to your goals',
+        ],
+        closing: `Thank you for trusting ApexStack Cloud with your cloud infrastructure. We don't take that trust lightly, and we're committed to exceeding your expectations.`,
+        ctaText: 'Schedule Onboarding Call',
+      };
+
+    case 'closedlost':
+      return {
+        subject: `Thank you for considering ApexStack Cloud, ${firstName}`,
+        heading: `Thank you, ${firstName}`,
+        intro: `We appreciate you taking the time to explore what ApexStack Cloud can offer. While we won't be working together right now, we want you to know that our door is always open if your needs change in the future.`,
+        nextSteps: [
+          'Your free <a href="https://apexstackcloud.com/assessment" style="color: #b8e600; text-decoration: none;">Cloud Readiness Assessment</a> is always available &mdash; retake it anytime to track your progress',
+          'We publish regular insights on cloud strategy at <a href="https://apexstackcloud.com/blog" style="color: #b8e600; text-decoration: none;">our blog</a>',
+          'If your situation changes or you\'d like a second opinion, reach out anytime &mdash; no pressure',
+        ],
+        closing: `We wish you all the best with your cloud journey. If there's anything we can help with down the road, don't hesitate to reach out.`,
+        ctaText: 'Stay Connected',
+      };
+
+    default:
+      // Generic follow-up
+      return {
+        subject: `Great talking with you, ${firstName}!`,
         heading: `Great talking with you, ${firstName}!`,
         intro: `Thank you for taking the time to connect with us today. We appreciated learning more about your cloud infrastructure needs and are excited about the opportunity to help.`,
         nextSteps: [

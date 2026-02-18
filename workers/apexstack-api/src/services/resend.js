@@ -29,7 +29,7 @@ import { buildContactNurture4Email } from '../templates/email-contact-nurture4.j
 // Meeting emails
 import { buildMeetingBookedEmail } from '../templates/email-meeting-booked.js';
 import { buildNoShowEmail } from '../templates/email-no-show.js';
-import { buildPostMeetingEmail } from '../templates/email-post-meeting.js';
+import { buildPostMeetingEmail, getEmailSubjectForStage } from '../templates/email-post-meeting.js';
 
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
 import { isUnsubscribed, hasSentEmail, recordSentEmail } from '../db/queries.js';
@@ -484,7 +484,7 @@ export async function sendPostMeetingEmail(contactData, env) {
     const res = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: `Great connecting with you, ${contactData.firstName}!`,
+      subject: getEmailSubjectForStage(contactData.dealStage, contactData.firstName),
       html: buildPostMeetingEmail({
         firstName: contactData.firstName,
         companyName: contactData.companyName || '',
