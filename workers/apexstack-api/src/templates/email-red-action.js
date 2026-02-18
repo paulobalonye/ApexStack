@@ -129,7 +129,7 @@ export function buildRedActionEmail({ name, firstName, unsubUrl }) {
                     <div style="color: #9ca3af; font-size: 14px; line-height: 1.6; padding-bottom: 20px;">
                       These three actions are a strong start, but every infrastructure is different. Book a free call and we'll build a prioritized roadmap specific to your environment, your risks, and your team's capacity.
                     </div>
-                    <a href="https://meetings-na2.hubspot.com/apexstack" style="display: inline-block; background: #b8e600; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: 0.3px;">
+                    <a href="http://meeting.apexstackcloud.com/meetings/apexstack" style="display: inline-block; background: #b8e600; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: 0.3px;">
                       GET YOUR PERSONALIZED ROADMAP
                     </a>
                     <div style="color: #6b7280; font-size: 12px; margin-top: 12px;">

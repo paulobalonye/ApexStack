@@ -4,15 +4,17 @@
      POST /api/assessment       — Assessment handler
      POST /api/contact          — Contact form handler
      POST /api/webhooks/resend  — Resend email events
+     POST /api/webhooks/hubspot — HubSpot meeting events
      GET  /api/unsubscribe      — Email unsubscribe
      GET  /api/health           — Health check
    Cron:
-     Daily at 9 AM UTC — Re-engagement emails
+     Daily at 9 AM EST — All email automation
    ============================================ */
 
 import { handleAssessment } from './handlers/assessment.js';
 import { handleContact } from './handlers/contact.js';
 import { handleResendWebhook } from './handlers/webhook.js';
+import { handleHubSpotWebhook } from './handlers/hubspot-webhook.js';
 import { handleScheduled } from './handlers/cron.js';
 import { generateUnsubToken } from './utils/unsubscribe.js';
 import { insertUnsubscribe } from './db/queries.js';
@@ -88,6 +90,24 @@ export default {
       }
     }
 
+    // Route: POST /api/webhooks/hubspot (Features 1, 2 — meeting events)
+    if (path === '/api/webhooks/hubspot' && request.method === 'POST') {
+      try {
+        const result = await handleHubSpotWebhook(request, env);
+        const status = result.success === false && result.error === 'Invalid signature' ? 401 : 200;
+        return new Response(JSON.stringify(result), {
+          status,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      } catch (err) {
+        console.error('HubSpot webhook handler error:', err);
+        return new Response(
+          JSON.stringify({ success: false, error: 'HubSpot webhook processing error' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
+        );
+      }
+    }
+
     // Route: GET /api/unsubscribe
     if (path === '/api/unsubscribe' && request.method === 'GET') {
       const email = url.searchParams.get('email');
@@ -143,7 +163,7 @@ export default {
     );
   },
 
-  // Cron trigger: Re-engagement emails (Feature 7)
+  // Cron trigger: Daily email automation dispatcher
   async scheduled(event, env, ctx) {
     ctx.waitUntil(handleScheduled(env));
   },

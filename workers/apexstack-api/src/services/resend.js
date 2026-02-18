@@ -26,8 +26,12 @@ import { buildContactNurture2Email } from '../templates/email-contact-nurture2.j
 import { buildContactNurture3Email } from '../templates/email-contact-nurture3.js';
 import { buildContactNurture4Email } from '../templates/email-contact-nurture4.js';
 
+// Meeting emails
+import { buildMeetingBookedEmail } from '../templates/email-meeting-booked.js';
+import { buildNoShowEmail } from '../templates/email-no-show.js';
+
 import { generateUnsubToken, buildUnsubUrl } from '../utils/unsubscribe.js';
-import { isUnsubscribed } from '../db/queries.js';
+import { isUnsubscribed, hasSentEmail, recordSentEmail } from '../db/queries.js';
 
 const RESEND_API = 'https://api.resend.com/emails';
 
@@ -375,7 +379,7 @@ function buildColdReengagementHtml(firstName, unsubUrl) {
         <tr><td style="color: #ffffff; font-size: 24px; font-weight: 700; line-height: 1.3; padding-bottom: 16px;">${firstName}, we haven't heard from you</td></tr>
         <tr><td style="color: #9ca3af; font-size: 15px; line-height: 1.7; padding-bottom: 24px;">A month ago you took our Cloud Readiness Assessment. Since then, the cloud landscape has continued to evolve &mdash; new security threats, cost optimization strategies, and compliance requirements.</td></tr>
         <tr><td style="color: #9ca3af; font-size: 15px; line-height: 1.7; padding-bottom: 32px;">Your <strong style="color: #ffffff;">free cloud architecture review</strong> is still available. Our senior engineers have helped dozens of teams transform their infrastructure in just weeks. No sales pitch &mdash; just a clear action plan.</td></tr>
-        <tr><td style="padding-bottom: 40px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; border-radius: 8px;"><a href="https://meetings-na2.hubspot.com/apexstack" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none;">Book Your Free Review</a></td></tr></table></td></tr>
+        <tr><td style="padding-bottom: 40px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; border-radius: 8px;"><a href="http://meeting.apexstackcloud.com/meetings/apexstack" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none;">Book Your Free Review</a></td></tr></table></td></tr>
         <tr><td style="border-top: 1px solid #222222; padding-top: 24px;"><p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 0;">ApexStack Cloud Technologies Limited<br><a href="${unsubUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a></p></td></tr>
       </table>
     </td></tr>
@@ -398,10 +402,117 @@ function buildWarmReengagementHtml(firstName, score, unsubUrl) {
           <p style="color: #ffffff; font-size: 14px; font-weight: 600; margin: 0 0 12px 0;">In a 30-minute call, we can:</p>
           <p style="color: #9ca3af; font-size: 14px; line-height: 1.8; margin: 0;">&bull; Walk through your specific results<br>&bull; Identify your highest-ROI improvements<br>&bull; Build a 90-day action plan<br>&bull; Answer any cloud infrastructure questions</p>
         </td></tr></table></td></tr>
-        <tr><td style="padding-bottom: 40px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; border-radius: 8px;"><a href="https://meetings-na2.hubspot.com/apexstack" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none;">Book a Strategy Session</a></td></tr></table></td></tr>
+        <tr><td style="padding-bottom: 40px;"><table cellpadding="0" cellspacing="0" role="presentation"><tr><td style="background: #b8e600; border-radius: 8px;"><a href="http://meeting.apexstackcloud.com/meetings/apexstack" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none;">Book a Strategy Session</a></td></tr></table></td></tr>
         <tr><td style="border-top: 1px solid #222222; padding-top: 24px;"><p style="color: #6b7280; font-size: 12px; line-height: 1.6; margin: 0;">ApexStack Cloud Technologies Limited<br><a href="${unsubUrl}" style="color: #6b7280; text-decoration: underline;">Unsubscribe</a></p></td></tr>
       </table>
     </td></tr>
   </table>
 </body></html>`;
+}
+
+/* ============================================
+   Meeting Follow-up Emails (Features 1, 2)
+   ============================================ */
+
+export async function sendMeetingBookedEmail(contactData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  if (!apiKey) return null;
+
+  const unsubbed = await isUnsubscribed(contactData.email, env);
+  if (unsubbed) return { status: 'skipped', reason: 'unsubscribed' };
+
+  const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
+
+  try {
+    const res = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: `Looking forward to our call, ${contactData.firstName}!`,
+      html: buildMeetingBookedEmail({ firstName: contactData.firstName, meetingDate: contactData.meetingDate, unsubUrl }),
+      headers: unsubHeaders,
+    }, apiKey);
+    return { status: 'sent', id: res.id };
+  } catch (err) {
+    console.error('Meeting booked email error:', err);
+    return { status: 'failed', error: err.message };
+  }
+}
+
+export async function sendNoShowEmail(contactData, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  if (!apiKey) return null;
+
+  const unsubbed = await isUnsubscribed(contactData.email, env);
+  if (unsubbed) return { status: 'skipped', reason: 'unsubscribed' };
+
+  const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
+
+  try {
+    const res = await sendEmail({
+      from: fromEmail,
+      to: [contactData.email],
+      subject: `We missed you, ${contactData.firstName} — let's reschedule`,
+      html: buildNoShowEmail({ firstName: contactData.firstName, rescheduleLink: contactData.rescheduleLink || 'http://meeting.apexstackcloud.com/meetings/apexstack', unsubUrl }),
+      headers: unsubHeaders,
+    }, apiKey);
+    return { status: 'sent', id: res.id };
+  } catch (err) {
+    console.error('No-show email error:', err);
+    return { status: 'failed', error: err.message };
+  }
+}
+
+/* ============================================
+   Bulk Email Sender (for cron broadcasts)
+   Handles dedup, unsubscribe checks, rate
+   limiting, and sent_emails tracking
+   ============================================ */
+
+export async function sendBulkEmails(recipients, buildEmailFn, emailType, referenceKey, env) {
+  const apiKey = env.RESEND_API_KEY;
+  const fromEmail = getFromAddress(env);
+  if (!apiKey) return { sent: 0, skipped: 0, failed: 0, reason: 'No API key' };
+
+  let sent = 0, skipped = 0, failed = 0;
+
+  for (const recipient of recipients) {
+    const firstName = (recipient.name || '').split(' ')[0] || 'there';
+
+    // Check unsubscribe
+    const unsubbed = await isUnsubscribed(recipient.email, env);
+    if (unsubbed) { skipped++; continue; }
+
+    // Check dedup
+    const alreadySent = await hasSentEmail(recipient.email, emailType, referenceKey, env);
+    if (alreadySent) { skipped++; continue; }
+
+    // Build unsub info
+    const { unsubUrl, unsubHeaders } = await getUnsubInfo(recipient.email, env);
+
+    // Build email content
+    const emailContent = buildEmailFn({ ...recipient, firstName, unsubUrl });
+
+    try {
+      await sendEmail({
+        from: fromEmail,
+        to: [recipient.email],
+        subject: emailContent.subject,
+        html: emailContent.html,
+        headers: unsubHeaders,
+      }, apiKey);
+
+      await recordSentEmail(recipient.email, emailType, referenceKey, env);
+      sent++;
+    } catch (err) {
+      console.error(`Bulk email error (${emailType}) for ${recipient.email}:`, err);
+      failed++;
+    }
+
+    // Rate limit
+    await delay(600);
+  }
+
+  return { sent, skipped, failed };
 }

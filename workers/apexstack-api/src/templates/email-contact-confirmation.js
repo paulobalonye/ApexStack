@@ -100,7 +100,7 @@ export function buildContactConfirmationEmail(contactData) {
                     <div style="color: #9ca3af; font-size: 14px; line-height: 1.6; padding-bottom: 20px;">
                       Skip the queue and book a free strategy session directly with one of our cloud architects.
                     </div>
-                    <a href="https://meetings-na2.hubspot.com/apexstack" style="display: inline-block; background: #b8e600; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: 0.3px;">
+                    <a href="http://meeting.apexstackcloud.com/meetings/apexstack" style="display: inline-block; background: #b8e600; color: #000000; font-size: 15px; font-weight: 700; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: 0.3px;">
                       BOOK A FREE STRATEGY SESSION
                     </a>
                   </td>

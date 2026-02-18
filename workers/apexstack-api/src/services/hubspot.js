@@ -27,6 +27,11 @@ const CUSTOM_PROPERTIES = [
   { name: 'email_engagement_level', label: 'Email Engagement', type: 'string', fieldType: 'text', groupName: 'contactinformation', description: 'Engagement tier: hot, warm, or cold' },
   // Service interest property (Feature 2 - Contact form gap)
   { name: 'service_interest', label: 'Service Interest', type: 'string', fieldType: 'text', groupName: 'contactinformation', description: 'Service interest from contact form submission' },
+  // Date properties for lifecycle emails (HubSpot Starter — no property limit)
+  { name: 'contract_end_date', label: 'Contract End Date', type: 'date', fieldType: 'date', groupName: 'contactinformation', description: 'Contract renewal date for reminder emails' },
+  { name: 'client_start_date', label: 'Client Start Date', type: 'date', fieldType: 'date', groupName: 'contactinformation', description: 'Date client relationship began' },
+  { name: 'employee_hire_date', label: 'Employee Hire Date', type: 'date', fieldType: 'date', groupName: 'contactinformation', description: 'Employee hire date for work anniversary emails' },
+  { name: 'date_of_birth', label: 'Date of Birth', type: 'date', fieldType: 'date', groupName: 'contactinformation', description: 'Birthday for greeting emails' },
 ];
 
 let propertiesEnsured = false;
@@ -473,5 +478,130 @@ export async function updateContactEngagement(email, engagementData, env) {
     }
   } catch (err) {
     console.error('HubSpot engagement sync error:', err);
+  }
+}
+
+/* ============================================
+   HubSpot Date-Based Queries
+   For cron lifecycle emails (birthdays,
+   anniversaries, renewals, closed-won deals)
+   ============================================ */
+
+export async function getContactsWithDateProperty(propertyName, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return [];
+
+  try {
+    const res = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [{
+          filters: [{
+            propertyName,
+            operator: 'HAS_PROPERTY',
+          }],
+        }],
+        properties: ['firstname', 'lastname', 'email', 'company', propertyName],
+        limit: 100,
+      }),
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error(`HubSpot: Error fetching contacts with ${propertyName}:`, err);
+    return [];
+  }
+}
+
+export async function searchContactsByDateRange(propertyName, startTimestamp, endTimestamp, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return [];
+
+  try {
+    const res = await fetch(`${HUBSPOT_API}/crm/v3/objects/contacts/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [{
+          filters: [
+            { propertyName, operator: 'GTE', value: String(startTimestamp) },
+            { propertyName, operator: 'LTE', value: String(endTimestamp) },
+          ],
+        }],
+        properties: ['firstname', 'lastname', 'email', 'company', propertyName],
+        limit: 100,
+      }),
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error(`HubSpot: Error searching ${propertyName} by date range:`, err);
+    return [];
+  }
+}
+
+export async function getClosedWonDeals(sinceDaysAgo, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return [];
+
+  const sinceDate = new Date();
+  sinceDate.setDate(sinceDate.getDate() - sinceDaysAgo);
+  const sinceTimestamp = sinceDate.getTime();
+
+  try {
+    const res = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals/search`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        filterGroups: [{
+          filters: [
+            { propertyName: 'dealstage', operator: 'EQ', value: 'closedwon' },
+            { propertyName: 'closedate', operator: 'GTE', value: String(sinceTimestamp) },
+          ],
+        }],
+        properties: ['dealname', 'dealstage', 'closedate', 'amount'],
+        limit: 50,
+        associations: ['contacts'],
+      }),
+    });
+
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.results || [];
+  } catch (err) {
+    console.error('HubSpot: Error fetching closed-won deals:', err);
+    return [];
+  }
+}
+
+export async function getContactById(contactId, env) {
+  const token = env.HUBSPOT_ACCESS_TOKEN;
+  if (!token) return null;
+
+  try {
+    const res = await fetch(
+      `${HUBSPOT_API}/crm/v3/objects/contacts/${contactId}?properties=firstname,lastname,email,company`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    );
+
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error('HubSpot: Error fetching contact by ID:', err);
+    return null;
   }
 }

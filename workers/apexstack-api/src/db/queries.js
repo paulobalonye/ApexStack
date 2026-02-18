@@ -223,6 +223,54 @@ export async function getEngagementStats(email, env) {
 }
 
 /* ============================================
+   Sent Email Dedup Tracking
+   Prevents duplicate sends from cron jobs
+   ============================================ */
+
+export async function hasSentEmail(email, emailType, referenceKey, env) {
+  const db = env.DB;
+  if (!db) return false;
+
+  const result = await db.prepare(
+    'SELECT id FROM sent_emails WHERE email = ? AND email_type = ? AND reference_key = ?'
+  ).bind(email, emailType, referenceKey || '').first();
+
+  return !!result;
+}
+
+export async function recordSentEmail(email, emailType, referenceKey, env) {
+  const db = env.DB;
+  if (!db) return;
+
+  await db.prepare(
+    'INSERT OR IGNORE INTO sent_emails (email, email_type, reference_key) VALUES (?, ?, ?)'
+  ).bind(email, emailType, referenceKey || '').run();
+}
+
+/* ============================================
+   Broadcast Recipient Query
+   Returns all unique active recipients
+   (leads + contacts minus unsubscribes)
+   ============================================ */
+
+export async function getAllActiveRecipients(env) {
+  const db = env.DB;
+  if (!db) return [];
+
+  const result = await db.prepare(`
+    SELECT DISTINCT email, name FROM (
+      SELECT email, name FROM leads
+      UNION
+      SELECT email, (first_name || ' ' || last_name) as name FROM contact_submissions
+    )
+    WHERE email NOT IN (SELECT email FROM unsubscribes)
+    ORDER BY email
+  `).all();
+
+  return result.results || [];
+}
+
+/* ============================================
    Re-engagement Queries (Feature 7)
    ============================================ */
 
