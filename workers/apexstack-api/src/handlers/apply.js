@@ -52,7 +52,7 @@ export async function handleJobApplication(body, env) {
       results.forward = { success: false, error: err.message };
     });
 
-  // HubSpot contact + hiring deal
+  // HubSpot contact + hiring deal (lifecyclestage: 'other' differentiates applicants from sales leads)
   const hubspotPromise = createHubSpotContact({
     name: `${applicationData.firstName} ${applicationData.lastName}`,
     email: applicationData.email,
@@ -61,6 +61,7 @@ export async function handleJobApplication(body, env) {
     role: applicationData.position,
     score: 0,
     level: 'Applicant',
+    lifecyclestage: 'other',
   }, env)
     .then(async (res) => {
       results.hubspot = { success: true, data: res };

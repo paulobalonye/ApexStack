@@ -99,7 +99,7 @@ export async function createHubSpotContact(leadData, env) {
     jobtitle: role,
     cloud_readiness_score: String(score),
     cloud_readiness_level: level,
-    lifecyclestage: 'lead',
+    lifecyclestage: leadData.lifecyclestage || 'lead',
     hs_lead_status: 'NEW',
   };
 
@@ -198,11 +198,11 @@ function getDealStage(score) {
   return 'contractsent';
 }
 
-async function getExistingDeal(contactId, env) {
+async function getExistingDeal(contactId, env, pipelineId = 'default') {
   const token = env.HUBSPOT_ACCESS_TOKEN;
 
   try {
-    // Search for deals associated with this contact
+    // Search for deals associated with this contact, filtered by pipeline
     const searchRes = await fetch(`${HUBSPOT_API}/crm/v3/objects/deals/search`, {
       method: 'POST',
       headers: {
@@ -211,14 +211,21 @@ async function getExistingDeal(contactId, env) {
       },
       body: JSON.stringify({
         filterGroups: [{
-          filters: [{
-            propertyName: 'associations.contact',
-            operator: 'EQ',
-            value: contactId,
-          }],
+          filters: [
+            {
+              propertyName: 'associations.contact',
+              operator: 'EQ',
+              value: contactId,
+            },
+            {
+              propertyName: 'pipeline',
+              operator: 'EQ',
+              value: pipelineId,
+            },
+          ],
         }],
         limit: 1,
-        properties: ['dealname', 'dealstage'],
+        properties: ['dealname', 'dealstage', 'pipeline'],
       }),
     });
 
@@ -244,8 +251,8 @@ export async function createHubSpotDeal(leadData, contactId, env) {
   const newStage = getDealStage(score);
 
   try {
-    // Feature 6: Check for existing deal to prevent duplicates
-    const existingDeal = await getExistingDeal(contactId, env);
+    // Feature 6: Check for existing deal to prevent duplicates (sales pipeline only)
+    const existingDeal = await getExistingDeal(contactId, env, 'default');
 
     if (existingDeal) {
       const currentStage = existingDeal.properties?.dealstage;
@@ -361,10 +368,10 @@ export async function createContactDeal(contactData, contactId, env) {
   const dealStage = getContactDealStage(serviceInterest);
 
   try {
-    // Check for any existing deal — don't overwrite assessment deals
-    const existingDeal = await getExistingDeal(contactId, env);
+    // Check for existing sales deal — don't overwrite assessment deals (only checks sales pipeline)
+    const existingDeal = await getExistingDeal(contactId, env, 'default');
     if (existingDeal) {
-      return { action: 'skipped', dealId: existingDeal.id, reason: 'Deal already exists' };
+      return { action: 'skipped', dealId: existingDeal.id, reason: 'Sales deal already exists' };
     }
 
     // Create new deal for contact form inquiry

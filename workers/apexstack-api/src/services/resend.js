@@ -41,6 +41,58 @@ import { isUnsubscribed, hasSentEmail, recordSentEmail, getContactInfoByEmail } 
 
 const RESEND_API = 'https://api.resend.com/emails';
 
+/* ============================================
+   D1 Template Override
+   Checks D1 for customized templates before
+   falling back to default JS functions
+   ============================================ */
+
+async function getCustomTemplateHtml(templateKey, variables, env) {
+  if (!env.DB) return null;
+  try {
+    const row = await env.DB.prepare(
+      'SELECT html_content FROM email_templates WHERE template_key = ? AND is_customized = 1'
+    ).bind(templateKey).first();
+    if (!row?.html_content) return null;
+
+    const flat = {};
+    for (const [key, value] of Object.entries(variables)) {
+      if (Array.isArray(value)) {
+        flat[key] = value.map(item =>
+          `<li style="padding: 6px 0; color: #d1d5db; font-size: 14px; line-height: 1.6;">${item}</li>`
+        ).join('');
+      } else if (value !== null && value !== undefined && typeof value === 'object') {
+        for (const [subKey, subValue] of Object.entries(value)) {
+          flat[`${key}_${subKey}`] = subValue;
+        }
+      } else {
+        flat[key] = value;
+      }
+    }
+
+    return row.html_content.replace(/\{\{(\w+)\}\}/g, (match, varName) =>
+      flat[varName] !== undefined ? String(flat[varName]) : match
+    );
+  } catch (err) {
+    console.error(`D1 template lookup error [${templateKey}]:`, err);
+    return null;
+  }
+}
+
+async function getCustomSubject(templateKey, variables, env) {
+  if (!env.DB) return null;
+  try {
+    const row = await env.DB.prepare(
+      'SELECT subject FROM email_templates WHERE template_key = ? AND is_customized = 1 AND subject IS NOT NULL'
+    ).bind(templateKey).first();
+    if (!row?.subject) return null;
+    return row.subject.replace(/\{\{(\w+)\}\}/g, (_, key) => variables[key] ?? '');
+  } catch (err) {
+    console.error(`D1 subject lookup error [${templateKey}]:`, err);
+    return null;
+  }
+}
+
 function getFromAddress(env) {
   const name = env.FROM_NAME || 'ApexStack Cloud';
   const email = env.FROM_EMAIL || 'hello@apexstackcloud.com';
@@ -121,11 +173,12 @@ export async function sendAssessmentEmails(leadData, env) {
   const results = [];
 
   try {
+    const scoreVars = { name, firstName, score, level, categoryPct, risks, recs, unsubUrl };
     const email1 = await sendEmail({
       from: fromEmail,
       to: [email],
-      subject: `Your Cloud Readiness Score: ${score}/100`,
-      html: buildScoreEmail({ name, firstName, score, level, categoryPct, risks, recs, unsubUrl }),
+      subject: await getCustomSubject('email1-score', { score }, env) || `Your Cloud Readiness Score: ${score}/100`,
+      html: await getCustomTemplateHtml('email1-score', scoreVars, env) || buildScoreEmail(scoreVars),
       headers: unsubHeaders,
     }, apiKey);
     results.push({ email: 1, status: 'sent', id: email1.id, tier: getTier(score) });
@@ -139,24 +192,27 @@ export async function sendAssessmentEmails(leadData, env) {
   // Branch based on score tier
   if (score <= 30) {
     // RED TIER: Day 0, Day 1, Day 3, Day 7, Day 14
+    const redVarsBase = { name, firstName, unsubUrl };
     await sendTieredEmails(results, fromEmail, email, apiKey, unsubHeaders, now, [
-      { day: 1, subject: `${firstName}, your infrastructure is at critical risk`, html: buildRedUrgentEmail({ name, firstName, score, risks, unsubUrl }) },
-      { day: 3, subject: `${firstName}, 3 things to fix this week`, html: buildRedActionEmail({ name, firstName, unsubUrl }) },
-      { day: 7, subject: 'How a Series B fintech cut cloud costs 47% in 90 days', html: buildCaseStudyEmail({ name, firstName, unsubUrl }) },
-      { day: 14, subject: `${firstName}, exclusive: emergency cloud audit — 50% off`, html: buildRedOfferEmail({ name, firstName, unsubUrl }) },
+      { day: 1, subject: await getCustomSubject('email-red-urgent', { firstName }, env) || `${firstName}, your infrastructure is at critical risk`, html: await getCustomTemplateHtml('email-red-urgent', { ...redVarsBase, score, risks }, env) || buildRedUrgentEmail({ ...redVarsBase, score, risks }) },
+      { day: 3, subject: await getCustomSubject('email-red-action', { firstName }, env) || `${firstName}, 3 things to fix this week`, html: await getCustomTemplateHtml('email-red-action', redVarsBase, env) || buildRedActionEmail(redVarsBase) },
+      { day: 7, subject: await getCustomSubject('email3-casestudy', { firstName }, env) || 'How a Series B fintech cut cloud costs 47% in 90 days', html: await getCustomTemplateHtml('email3-casestudy', redVarsBase, env) || buildCaseStudyEmail(redVarsBase) },
+      { day: 14, subject: await getCustomSubject('email-red-offer', { firstName }, env) || `${firstName}, exclusive: emergency cloud audit — 50% off`, html: await getCustomTemplateHtml('email-red-offer', redVarsBase, env) || buildRedOfferEmail(redVarsBase) },
     ]);
   } else if (score <= 60) {
     // YELLOW TIER: Day 0, Day 2, Day 5, Day 10 (existing flow)
+    const yellowVarsBase = { name, firstName, unsubUrl };
     await sendTieredEmails(results, fromEmail, email, apiKey, unsubHeaders, now, [
-      { day: 2, subject: `${firstName}, 3 cloud mistakes that cost fintech startups millions`, html: buildMistakesEmail({ name, firstName, unsubUrl }) },
-      { day: 5, subject: 'How a Series B fintech cut cloud costs 47% in 90 days', html: buildCaseStudyEmail({ name, firstName, unsubUrl }) },
-      { day: 10, subject: `${firstName}, claim your free cloud architecture review`, html: buildOfferEmail({ name, firstName, unsubUrl }) },
+      { day: 2, subject: await getCustomSubject('email2-mistakes', { firstName }, env) || `${firstName}, 3 cloud mistakes that cost fintech startups millions`, html: await getCustomTemplateHtml('email2-mistakes', yellowVarsBase, env) || buildMistakesEmail(yellowVarsBase) },
+      { day: 5, subject: await getCustomSubject('email3-casestudy', { firstName }, env) || 'How a Series B fintech cut cloud costs 47% in 90 days', html: await getCustomTemplateHtml('email3-casestudy', yellowVarsBase, env) || buildCaseStudyEmail(yellowVarsBase) },
+      { day: 10, subject: await getCustomSubject('email4-offer', { firstName }, env) || `${firstName}, claim your free cloud architecture review`, html: await getCustomTemplateHtml('email4-offer', yellowVarsBase, env) || buildOfferEmail(yellowVarsBase) },
     ]);
   } else {
     // GREEN TIER: Day 0, Day 3, Day 7
+    const greenVarsBase = { name, firstName, unsubUrl };
     await sendTieredEmails(results, fromEmail, email, apiKey, unsubHeaders, now, [
-      { day: 3, subject: `${firstName}, you're ahead of 90% of companies`, html: buildGreenPartnershipEmail({ name, firstName, score, unsubUrl }) },
-      { day: 7, subject: `Next-level: chaos engineering & FinOps`, html: buildGreenAdvancedEmail({ name, firstName, unsubUrl }) },
+      { day: 3, subject: await getCustomSubject('email-green-partnership', { firstName }, env) || `${firstName}, you're ahead of 90% of companies`, html: await getCustomTemplateHtml('email-green-partnership', { ...greenVarsBase, score }, env) || buildGreenPartnershipEmail({ ...greenVarsBase, score }) },
+      { day: 7, subject: await getCustomSubject('email-green-advanced', { firstName }, env) || `Next-level: chaos engineering & FinOps`, html: await getCustomTemplateHtml('email-green-advanced', greenVarsBase, env) || buildGreenAdvancedEmail(greenVarsBase) },
     ]);
   }
 
@@ -206,8 +262,8 @@ export async function sendContactConfirmation(contactData, env) {
   return sendEmail({
     from: fromEmail,
     to: [contactData.email],
-    subject: `Thanks for reaching out, ${contactData.firstName}!`,
-    html: buildContactConfirmationEmail(contactData),
+    subject: await getCustomSubject('email-contact-confirmation', { firstName: contactData.firstName }, env) || `Thanks for reaching out, ${contactData.firstName}!`,
+    html: await getCustomTemplateHtml('email-contact-confirmation', contactData, env) || buildContactConfirmationEmail(contactData),
   }, apiKey);
 }
 
@@ -234,12 +290,13 @@ export async function sendContactNurtureEmails(contactData, env) {
   const results = [];
 
   // Nurture Email 2: Day 2 — Assessment CTA
+  const n2Vars = { firstName: contactData.firstName, unsubUrl };
   try {
     const n2 = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: `${contactData.firstName}, get your free Cloud Readiness Score`,
-      html: buildContactNurture2Email({ firstName: contactData.firstName, unsubUrl }),
+      subject: await getCustomSubject('email-contact-nurture2', n2Vars, env) || `${contactData.firstName}, get your free Cloud Readiness Score`,
+      html: await getCustomTemplateHtml('email-contact-nurture2', n2Vars, env) || buildContactNurture2Email(n2Vars),
       scheduled_at: addDays(now, 2),
       headers: unsubHeaders,
     }, apiKey);
@@ -252,12 +309,13 @@ export async function sendContactNurtureEmails(contactData, env) {
   await delay(600);
 
   // Nurture Email 3: Day 5 — Case study
+  const n3Vars = { firstName: contactData.firstName, unsubUrl };
   try {
     const n3 = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: `How a fintech transformed their cloud in 90 days`,
-      html: buildContactNurture3Email({ firstName: contactData.firstName, unsubUrl }),
+      subject: await getCustomSubject('email-contact-nurture3', n3Vars, env) || `How a fintech transformed their cloud in 90 days`,
+      html: await getCustomTemplateHtml('email-contact-nurture3', n3Vars, env) || buildContactNurture3Email(n3Vars),
       scheduled_at: addDays(now, 5),
       headers: unsubHeaders,
     }, apiKey);
@@ -270,12 +328,13 @@ export async function sendContactNurtureEmails(contactData, env) {
   await delay(600);
 
   // Nurture Email 4: Day 10 — Industry trends + soft CTA (Feature 6)
+  const n4Vars = { firstName: contactData.firstName, unsubUrl };
   try {
     const n4 = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: `${contactData.firstName}, what companies like yours are doing with cloud`,
-      html: buildContactNurture4Email({ firstName: contactData.firstName, unsubUrl }),
+      subject: await getCustomSubject('email-contact-nurture4', n4Vars, env) || `${contactData.firstName}, what companies like yours are doing with cloud`,
+      html: await getCustomTemplateHtml('email-contact-nurture4', n4Vars, env) || buildContactNurture4Email(n4Vars),
       scheduled_at: addDays(now, 10),
       headers: unsubHeaders,
     }, apiKey);
@@ -535,8 +594,8 @@ export async function sendApplicationConfirmation(applicationData, env) {
   return sendEmail({
     from: fromEmail,
     to: [applicationData.email],
-    subject: `Application received — ${applicationData.firstName}, we're excited to review it!`,
-    html: buildApplicationConfirmationEmail(applicationData),
+    subject: await getCustomSubject('email-hiring-confirmation', { firstName: applicationData.firstName }, env) || `Application received — ${applicationData.firstName}, we're excited to review it!`,
+    html: await getCustomTemplateHtml('email-hiring-confirmation', applicationData, env) || buildApplicationConfirmationEmail(applicationData),
   }, apiKey);
 }
 
@@ -606,16 +665,13 @@ export async function sendHiringStageEmail(contactData, env) {
   };
 
   try {
+    const hiringKey = `hiring:${contactData.hiringStage || 'default'}`;
+    const hiringVars = { firstName: contactData.firstName, positionName: contactData.positionName || '', hiringStage: contactData.hiringStage || 'default', unsubUrl };
     const res = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: getHiringEmailSubjectForStage(contactData.hiringStage, contactData.firstName),
-      html: buildHiringStageEmail({
-        firstName: contactData.firstName,
-        positionName: contactData.positionName || '',
-        hiringStage: contactData.hiringStage || 'default',
-        unsubUrl,
-      }),
+      subject: await getCustomSubject(hiringKey, { firstName: contactData.firstName }, env) || getHiringEmailSubjectForStage(contactData.hiringStage, contactData.firstName),
+      html: await getCustomTemplateHtml(hiringKey, hiringVars, env) || buildHiringStageEmail(hiringVars),
       headers: unsubHeaders,
     }, apiKey);
     return { status: 'sent', id: res.id };
@@ -645,11 +701,11 @@ export async function sendReengagementEmail(leadData, type, env) {
   let subject, html;
 
   if (type === 'cold') {
-    subject = `${firstName}, your free cloud review is still available`;
-    html = buildColdReengagementHtml(firstName, unsubUrl);
+    subject = await getCustomSubject('reengagement-cold', { firstName }, env) || `${firstName}, your free cloud review is still available`;
+    html = await getCustomTemplateHtml('reengagement-cold', { firstName, unsubUrl }, env) || buildColdReengagementHtml(firstName, unsubUrl);
   } else {
-    subject = `${firstName}, still thinking about your cloud strategy?`;
-    html = buildWarmReengagementHtml(firstName, leadData.score, unsubUrl);
+    subject = await getCustomSubject('reengagement-warm', { firstName }, env) || `${firstName}, still thinking about your cloud strategy?`;
+    html = await getCustomTemplateHtml('reengagement-warm', { firstName, score: leadData.score, unsubUrl }, env) || buildWarmReengagementHtml(firstName, leadData.score, unsubUrl);
   }
 
   try {
@@ -725,11 +781,12 @@ export async function sendMeetingBookedEmail(contactData, env) {
   const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
 
   try {
+    const meetingVars = { firstName: contactData.firstName, meetingDate: contactData.meetingDate, unsubUrl };
     const res = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: `Looking forward to our call, ${contactData.firstName}!`,
-      html: buildMeetingBookedEmail({ firstName: contactData.firstName, meetingDate: contactData.meetingDate, unsubUrl }),
+      subject: await getCustomSubject('email-meeting-booked', { firstName: contactData.firstName }, env) || `Looking forward to our call, ${contactData.firstName}!`,
+      html: await getCustomTemplateHtml('email-meeting-booked', meetingVars, env) || buildMeetingBookedEmail(meetingVars),
       headers: unsubHeaders,
     }, apiKey);
     return { status: 'sent', id: res.id };
@@ -750,11 +807,12 @@ export async function sendNoShowEmail(contactData, env) {
   const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
 
   try {
+    const noShowVars = { firstName: contactData.firstName, rescheduleLink: contactData.rescheduleLink || 'http://meeting.apexstackcloud.com/meetings/apexstack', unsubUrl };
     const res = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: `We missed you, ${contactData.firstName} — let's reschedule`,
-      html: buildNoShowEmail({ firstName: contactData.firstName, rescheduleLink: contactData.rescheduleLink || 'http://meeting.apexstackcloud.com/meetings/apexstack', unsubUrl }),
+      subject: await getCustomSubject('email-no-show', { firstName: contactData.firstName }, env) || `We missed you, ${contactData.firstName} — let's reschedule`,
+      html: await getCustomTemplateHtml('email-no-show', noShowVars, env) || buildNoShowEmail(noShowVars),
       headers: unsubHeaders,
     }, apiKey);
     return { status: 'sent', id: res.id };
@@ -780,17 +838,13 @@ export async function sendPostMeetingEmail(contactData, env) {
   const { unsubUrl, unsubHeaders } = await getUnsubInfo(contactData.email, env);
 
   try {
+    const postMeetingKey = `post-meeting:${contactData.dealStage || 'default'}`;
+    const postMeetingVars = { firstName: contactData.firstName, companyName: contactData.companyName || '', dealStage: contactData.dealStage || 'default', meetingSummary: contactData.meetingSummary || '', unsubUrl };
     const res = await sendEmail({
       from: fromEmail,
       to: [contactData.email],
-      subject: getEmailSubjectForStage(contactData.dealStage, contactData.firstName),
-      html: buildPostMeetingEmail({
-        firstName: contactData.firstName,
-        companyName: contactData.companyName || '',
-        dealStage: contactData.dealStage || 'default',
-        meetingSummary: contactData.meetingSummary || '',
-        unsubUrl,
-      }),
+      subject: await getCustomSubject(postMeetingKey, { firstName: contactData.firstName }, env) || getEmailSubjectForStage(contactData.dealStage, contactData.firstName),
+      html: await getCustomTemplateHtml(postMeetingKey, postMeetingVars, env) || buildPostMeetingEmail(postMeetingVars),
       headers: unsubHeaders,
     }, apiKey);
     return { status: 'sent', id: res.id };

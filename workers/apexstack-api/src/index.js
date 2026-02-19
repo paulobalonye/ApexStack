@@ -17,6 +17,7 @@ import { handleContact } from './handlers/contact.js';
 import { handleJobApplication } from './handlers/apply.js';
 import { handleResendWebhook } from './handlers/webhook.js';
 import { handleHubSpotWebhook } from './handlers/hubspot-webhook.js';
+import { handleAdminRequest } from './handlers/admin.js';
 import { handleScheduled } from './handlers/cron.js';
 import { generateUnsubToken } from './utils/unsubscribe.js';
 import { insertUnsubscribe } from './db/queries.js';
@@ -30,8 +31,8 @@ export default {
     // CORS headers
     const corsHeaders = {
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     };
 
     // Handle preflight
@@ -164,6 +165,23 @@ export default {
         return new Response(
           buildUnsubPage('Something went wrong. Please try again later or email info@apexstackcloud.com.', false),
           { status: 500, headers: { 'Content-Type': 'text/html' } }
+        );
+      }
+    }
+
+    // Route: Admin Dashboard API
+    if (path.startsWith('/api/admin/')) {
+      try {
+        const result = await handleAdminRequest(request, url, env);
+        return new Response(JSON.stringify(result.body), {
+          status: result.status,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        });
+      } catch (err) {
+        console.error('Admin handler error:', err);
+        return new Response(
+          JSON.stringify({ success: false, error: 'Internal server error' }),
+          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
         );
       }
     }

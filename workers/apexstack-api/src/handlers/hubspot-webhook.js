@@ -245,7 +245,7 @@ async function handleDealStageChange(event, env) {
 
   // Route to hiring handler if this is the hiring pipeline
   const pipeline = deal.properties?.pipeline;
-  if (pipeline === HIRING_PIPELINE_ID) {
+  if (String(pipeline) === HIRING_PIPELINE_ID) {
     return handleHiringStageChange(dealId, newStage, deal, env);
   }
 
@@ -317,7 +317,7 @@ async function handleDealStageChange(event, env) {
    ============================================ */
 
 async function handleHiringStageChange(dealId, newStage, deal, env) {
-  const stageKey = HIRING_STAGE_MAP[newStage] || null;
+  const stageKey = HIRING_STAGE_MAP[String(newStage)] || null;
   console.log(`[HIRING] Deal ${dealId} stage → "${newStage}" (key: ${stageKey})`);
 
   if (!stageKey) {
@@ -400,3 +400,4 @@ export async function handleNoShow(contactEmail, firstName, env) {
 
   return { event: 'no-show', email: contactEmail, ...result };
 }
+
