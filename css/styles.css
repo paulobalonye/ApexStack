@@ -1685,8 +1685,11 @@ h1, h2, h3, h4, h5, h6 {
    ============================================ */
 .offices-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr;
   gap: 2rem;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .office-card {
