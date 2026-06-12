@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI for DevOps - 12-Week Course Syllabus | ApexStack Cloud</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #1e40af;
+            --light-blue: #3b82f6;
+            --dark-navy: #1e3a5f;
+            --success-green: #16a34a;
+            --light-gray: #f3f4f6;
+            --lighter-gray: #f9fafb;
+            --text-dark: #1f2937;
+            --text-light: #6b7280;
+            --border-light: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            line-height: 1.6;
+            color: var(--text-dark);
+            background-color: #fff;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            font-size: 1.25rem;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(30, 64, 175, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+            padding: 4rem 2rem;
+            text-align: center;
+        }
+
+        .hero-content {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-navy);
+            font-weight: 800;
+        }
+
+        .hero h1 .blue {
+            color: var(--light-blue);
+        }
+
+        .hero-subtitle {
+            font-size: 1.25rem;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--success-green);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .info-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+            text-align: left;
+        }
+
+        .info-card label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .info-card h3 {
+            font-size: 1.25rem;
+            color: var(--text-dark);
+        }
+
+        /* Content Sections */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        section {
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            color: var(--dark-navy);
+            font-weight: 800;
+        }
+
+        .welcome-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: var(--text-light);
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--primary-blue) 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .feature-content h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .feature-content p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        /* Learning Path */
+        .phase-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .phase-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .phase-card:hover {
+            border-color: var(--light-blue);
+            box-shadow: 0 10px 30px rgba(30, 64, 175, 0.1);
+        }
+
+        .phase-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+        }
+
+        .phase-card.job-ready .phase-number {
+            background: linear-gradient(135deg, var(--success-green) 0%, #15803d 100%);
+        }
+
+        .phase-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .phase-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .phase-weeks {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .phase-description {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Curriculum */
+        .week-card {
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .week-card:hover {
+            border-color: var(--light-blue);
+            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.08);
+        }
+
+        .week-header {
+            display: flex;
+            gap: 1.5rem;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .week-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--light-blue) 0%, var(--primary-blue) 100%);
+            color: white;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .week-title {
+            flex: 1;
+        }
+
+        .week-title h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
+        }
+
+        .week-phase {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .week-content {
+            margin-left: 90px;
+        }
+
+        .learn-section, .build-section {
+            margin-bottom: 0.75rem;
+        }
+
+        .learn-section strong, .build-section strong {
+            color: var(--primary-blue);
+            font-weight: 700;
+        }
+
+        .build-section {
+            color: var(--success-green);
+            font-weight: 500;
+        }
+
+        .week-description {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Outcomes Section */
+        .outcomes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .outcome-item {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .outcome-check {
+            color: var(--success-green);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .outcome-item p {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .outcome-item strong {
+            color: var(--text-dark);
+            font-weight: 600;
+        }
+
+        /* How You'll Learn */
+        .learn-items {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .learn-item {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            background: var(--lighter-gray);
+            border-radius: 12px;
+            border-left: 4px solid var(--light-blue);
+        }
+
+        .learn-item-icon {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid var(--light-blue);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--light-blue);
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .learn-item h3 {
+            font-size: 1.1rem;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .learn-item p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+        }
+
+        /* Assessment Boxes */
+        .assessment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .assessment-box {
+            background: var(--lighter-gray);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-light);
+        }
+
+        .assessment-box h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--primary-blue);
+        }
+
+        .assessment-box p {
+            color: var(--text-light);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Career Support */
+        .support-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .support-item {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .support-check {
+            color: var(--success-green);
+            font-size: 1.5rem;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .support-item h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .support-item p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* Enrollment Box */
+        .enrollment-section {
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.05) 0%, rgba(34, 197, 94, 0.05) 100%);
+            border: 2px solid var(--success-green);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            margin-top: 2rem;
+        }
+
+        .enrollment-container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .enrollment-left h3 {
+            font-size: 1.5rem;
+            color: var(--success-green);
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .enrollment-left p {
+            color: var(--text-light);
+            margin-bottom: 1rem;
+        }
+
+        .enrollment-right {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .enrollment-right h3 {
+            font-size: 1.8rem;
+            color: var(--text-dark);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .enrollment-right p {
+            color: var(--text-light);
+            margin-bottom: 0.25rem;
+        }
+
+        /* Details Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .detail-item {
+            background: white;
+            border: 1px solid var(--border-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--light-blue);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--light-gray);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-light);
+            border-top: 1px solid var(--border-light);
+            margin-top: 4rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-logo {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .footer-contact {
+            font-size: 0.95rem;
+            margin-top: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            .enrollment-container {
+                grid-template-columns: 1fr;
+            }
+
+            .enrollment-right {
+                text-align: left;
+                align-items: flex-start;
+            }
+
+            .week-header {
+                flex-direction: column;
+            }
+
+            .week-content {
+                margin-left: 0;
+            }
+
+            nav {
+                padding: 1rem;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-container">
+            <div class="logo">
+                <div class="logo-icon">A</div>
+                ApexStack Cloud
+            </div>
+            <a href="https://apexstackcloud.com" style="color: var(--text-light); text-decoration: none;">Visit Website</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <div class="section-label">Course Syllabus</div>
+            <h1>AI for <span class="blue">DevOps</span></h1>
+            <p class="hero-subtitle">12-Week Hands-On Azure Cohort</p>
+            <p class="hero-subtitle" style="font-size: 1rem; margin-bottom: 1rem;">Beginner to Advanced · No prior experience required</p>
+            <div class="badge">✓ Job Placement Guaranteed</div>
+
+            <div class="hero-grid">
+                <div class="info-card">
+                    <label>Start Date</label>
+                    <h3>Friday, July 24, 2026</h3>
+                </div>
+                <div class="info-card">
+                    <label>Duration</label>
+                    <h3>12 weeks · 10 to 15 hrs/week</h3>
+                </div>
+                <div class="info-card">
+                    <label>Format</label>
+                    <h3>Live, mentor-led + hands-on labs</h3>
+                </div>
+                <div class="info-card">
+                    <label>Platform</label>
+                    <h3>Microsoft Azure</h3>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Welcome Section -->
+        <section>
+            <div class="section-label">Welcome</div>
+            <h2>What this program is</h2>
+            <p class="welcome-text">
+                AI for DevOps is a live, mentor-led cohort that takes you from cloud fundamentals to advanced, AI-assisted DevOps on Microsoft Azure, all in 12 focused weeks. Every week pairs clear teaching with a real, hands-on lab, so you learn by building. You finish with a production-grade portfolio, a certificate, and guaranteed job-placement support.
+            </p>
+
+            <h2 style="margin-top: 2rem; font-size: 1.8rem;">Who it's for</h2>
+            <p class="welcome-text">
+                Career-changers with no tech background, sysadmins and IT pros moving into the cloud, and developers or cloud engineers who want to add modern DevOps and AIOps to their toolkit. If you can use a computer and you're willing to practice, you belong here.
+            </p>
+
+            <h2 style="margin-top: 2rem; font-size: 1.8rem;">What you'll need</h2>
+            <p class="welcome-text">
+                A laptop and internet connection, and roughly 10 to 15 hours per week. We guide you through setting up your Azure account (the free tier covers most labs). No prior cloud experience required.
+            </p>
+
+            <div class="feature-list">
+                <div class="feature-item">
+                    <div class="feature-icon">🛠️</div>
+                    <div class="feature-content">
+                        <h3>Tools you'll use</h3>
+                        <p>Microsoft Azure · Azure CLI · Terraform & Bicep · Docker · Kubernetes (AKS) · GitHub Actions · Azure Monitor · an AI coding assistant</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🎯</div>
+                    <div class="feature-content">
+                        <h3>Job placement, guaranteed</h3>
+                        <p>We support you until you're hired, with 1-on-1 mock interviews, resume & LinkedIn coaching, and direct employer connections.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Outcomes Section -->
+        <section>
+            <div class="section-label">Outcomes</div>
+            <h2>What you'll be able to do</h2>
+            <p style="color: var(--text-light); margin-bottom: 2rem;">By the time you graduate, you will be able to:</p>
+
+            <div class="outcomes-grid">
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Design and deploy secure infrastructure</strong> on Microsoft Azure</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Write reusable infrastructure as code</strong> with Terraform & Bicep</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Containerize applications</strong> and run them on Azure Kubernetes (AKS)</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Build CI/CD pipelines</strong> that test, scan and deploy automatically</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Monitor systems</strong> and respond to incidents using AIOps</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Use AI to accelerate your engineering</strong>, then verify its output</div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Ship a production-grade portfolio project</strong></div>
+                </div>
+                <div class="outcome-item">
+                    <div class="outcome-check">✓</div>
+                    <div><strong>Interview with confidence</strong> and land a DevOps role</div>
+                </div>
+            </div>
+
+            <h2 style="margin-top: 3rem; font-size: 2rem;">The Learning Path</h2>
+            <p style="color: var(--text-light); margin-bottom: 2rem;">Four phases, twelve weeks</p>
+
+            <div class="phase-grid">
+                <div class="phase-card">
+                    <div class="phase-number">1</div>
+                    <h3>Foundations</h3>
+                    <div class="phase-weeks">Weeks 1 to 3</div>
+                    <div class="phase-description">Cloud, Linux, networking, compute and storage: the bedrock.</div>
+                </div>
+                <div class="phase-card">
+                    <div class="phase-number">2</div>
+                    <h3>Core DevOps</h3>
+                    <div class="phase-weeks">Weeks 4 to 8</div>
+                    <div class="phase-description">Security, IaC, containers, Kubernetes & CI/CD pipelines.</div>
+                </div>
+                <div class="phase-card">
+                    <div class="phase-number">3</div>
+                    <h3>AI & AIOps</h3>
+                    <div class="phase-weeks">Weeks 9 to 11</div>
+                    <div class="phase-description">Observability, AI-assisted engineering & serverless data.</div>
+                </div>
+                <div class="phase-card job-ready">
+                    <div class="phase-number">4</div>
+                    <h3>Job-Ready</h3>
+                    <div class="phase-weeks">Week 12</div>
+                    <div class="phase-description">Capstone project, portfolio polish & interview prep.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Curriculum Section -->
+        <section>
+            <div class="section-label">The Curriculum</div>
+            <h2>Weekly breakdown</h2>
+
+            <h3 style="font-size: 1.5rem; margin: 2rem 0 1.5rem; color: var(--text-dark);">Weeks 1 to 4</h3>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">01</div>
+                    <div class="week-title">
+                        <h3>Week 1 · Cloud & Azure Foundations</h3>
+                        <div class="week-phase">Foundations</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> How the cloud works; IaaS / PaaS / SaaS; the Azure portal, CLI & Cloud Shell; regions & resource groups; billing and cost controls.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Set up and secure your own Azure account with budget alerts and your first resource.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">02</div>
+                    <div class="week-title">
+                        <h3>Week 2 · Linux, Networking & the CLI</h3>
+                        <div class="week-phase">Foundations</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Linux essentials & SSH; networking basics (IP, DNS, ports, CIDR); automating tasks with Bash and the Azure CLI.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Provision and configure a Linux VM with a repeatable script.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">03</div>
+                    <div class="week-title">
+                        <h3>Week 3 · Compute, Storage & Networking</h3>
+                        <div class="week-phase">Foundations</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Azure VMs & scale sets; load balancing; Blob, Disk & File storage; Virtual Networks and subnets.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Deploy an autoscaling web tier on a segmented network.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">04</div>
+                    <div class="week-title">
+                        <h3>Week 4 · Identity, Access & Security</h3>
+                        <div class="week-phase">Core DevOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Microsoft Entra ID; role-based access control & least privilege; managed identities; Key Vault; encryption.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Secure an app with least-privilege access and secrets stored in Key Vault.</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1.5rem; margin: 2rem 0 1.5rem; color: var(--text-dark);">Weeks 5 to 8</h3>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">05</div>
+                    <div class="week-title">
+                        <h3>Week 5 · Infrastructure as Code</h3>
+                        <div class="week-phase">Core DevOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Terraform & Bicep; declarative infrastructure; state & remote backends; reusable modules; plan & apply.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Recreate your entire environment as version-controlled code.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">06</div>
+                    <div class="week-title">
+                        <h3>Week 6 · Containers & Docker</h3>
+                        <div class="week-phase">Core DevOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Containers vs VMs; Dockerfiles & multi-stage builds; Azure Container Registry; image scanning.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Containerize an application and push a scanned image to ACR.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">07</div>
+                    <div class="week-title">
+                        <h3>Week 7 · Azure Kubernetes Service (AKS)</h3>
+                        <div class="week-phase">Core DevOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Kubernetes core concepts; deployments, services & ingress; AKS; autoscaling and self-healing.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Deploy and scale a multi-service application on AKS.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">08</div>
+                    <div class="week-title">
+                        <h3>Week 8 · CI/CD & GitHub Actions</h3>
+                        <div class="week-phase">Core DevOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Pipelines (build, test, scan, deploy); GitOps; secure secretless authentication; progressive delivery.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Build a pipeline that automatically deploys on every push.</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1.5rem; margin: 2rem 0 1.5rem; color: var(--text-dark);">Weeks 9 to 12</h3>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">09</div>
+                    <div class="week-title">
+                        <h3>Week 9 · AIOps & Observability</h3>
+                        <div class="week-phase">AI & AIOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Metrics, logs & traces; Azure Monitor & Log Analytics (KQL); SLOs & alerting; incident response.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Create a monitoring dashboard with alerts and an incident runbook.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">10</div>
+                    <div class="week-title">
+                        <h3>Week 10 · AI-Assisted Engineering</h3>
+                        <div class="week-phase">AI & AIOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Using AI to generate & review infrastructure code, debug failures and draft runbooks, and learn how to verify it responsibly.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Build an AI-assisted automation workflow you can fully explain and defend.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">11</div>
+                    <div class="week-title">
+                        <h3>Week 11 · Serverless & Data Services</h3>
+                        <div class="week-phase">AI & AIOps</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Azure Functions & event-driven design; API Management; Azure SQL & Cosmos DB; caching & backups.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Ship a serverless API backed by a managed database.</div>
+                </div>
+            </div>
+
+            <div class="week-card">
+                <div class="week-header">
+                    <div class="week-number">12</div>
+                    <div class="week-title">
+                        <h3>Week 12 · Capstone & Career Prep</h3>
+                        <div class="week-phase">Job-Ready</div>
+                    </div>
+                </div>
+                <div class="week-content">
+                    <div class="learn-section"><strong>YOU'LL LEARN:</strong> Well-Architected review; cost optimization; portfolio polish; interview, resume & LinkedIn preparation.</div>
+                    <div class="build-section"><strong>YOU'LL BUILD:</strong> Complete your capstone project and finish job-ready with a portfolio and interview practice.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- How You'll Learn -->
+        <section>
+            <div class="section-label">How You'll Learn</div>
+            <h2>Learn by building, every week</h2>
+
+            <div class="learn-items">
+                <div class="learn-item">
+                    <div class="learn-item-icon">💻</div>
+                    <div>
+                        <h3>Live, mentor-led sessions</h3>
+                        <p>Small cohort with real instructors and weekly Q&A. You never learn alone.</p>
+                    </div>
+                </div>
+                <div class="learn-item">
+                    <div class="learn-item-icon">⚙️</div>
+                    <div>
+                        <h3>Hands-on Azure labs</h3>
+                        <p>Every week you build on real Azure infrastructure, not slides or quizzes.</p>
+                    </div>
+                </div>
+                <div class="learn-item">
+                    <div class="learn-item-icon">🤖</div>
+                    <div>
+                        <h3>AI as your co-engineer</h3>
+                        <p>Use AI to write, debug and ship faster, then learn to verify and own every line.</p>
+                    </div>
+                </div>
+                <div class="learn-item">
+                    <div class="learn-item-icon">🚀</div>
+                    <div>
+                        <h3>A real capstone project</h3>
+                        <p>Graduate with a production-grade build that proves your skills to employers.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="assessment-grid">
+                <div class="assessment-box">
+                    <h3>How you're assessed</h3>
+                    <p>Weekly hands-on labs (working infrastructure), portfolio deliverables, a mid-program checkpoint, and a final capstone project and presentation.</p>
+                </div>
+                <div class="assessment-box">
+                    <h3>Certificate & certifications</h3>
+                    <p>Earn a Certificate of Completion. The curriculum is aligned to Microsoft AZ-104 (Azure Administrator) and AZ-400 (DevOps Engineer Expert).</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Career Support -->
+        <section>
+            <div class="section-label">Career Support</div>
+            <h2>Guaranteed job placement assistance</h2>
+            <p style="color: var(--text-light); margin-bottom: 2rem;">We don't just train you. We work with you until you're hired.</p>
+
+            <div class="support-grid">
+                <div class="support-item">
+                    <div class="support-check">✓</div>
+                    <div>
+                        <h3>1-on-1 mock interviews</h3>
+                        <p>Technical and behavioral practice with real, actionable feedback.</p>
+                    </div>
+                </div>
+                <div class="support-item">
+                    <div class="support-check">✓</div>
+                    <div>
+                        <h3>Resume & LinkedIn</h3>
+                        <p>Optimized to pass screening and attract recruiters.</p>
+                    </div>
+                </div>
+                <div class="support-item">
+                    <div class="support-check">✓</div>
+                    <div>
+                        <h3>Employer connections</h3>
+                        <p>Direct introductions to our hiring network.</p>
+                    </div>
+                </div>
+                <div class="support-item">
+                    <div class="support-check">✓</div>
+                    <div>
+                        <h3>Offer & salary coaching</h3>
+                        <p>Negotiate with confidence and maximize your offer.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="enrollment-section">
+                <div class="enrollment-container">
+                    <div class="enrollment-left">
+                        <h3>Ready to start?</h3>
+                        <p>Seats are limited. Enrolling now for the July 24 cohort.</p>
+                    </div>
+                    <div class="enrollment-right">
+                        <h3 style="color: var(--light-blue);">apexstackcloud.com</h3>
+                        <p>(216) 215-1449</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Details & Enrollment -->
+        <section>
+            <div class="section-label">Details & Enrollment</div>
+            <h2>Reserve your seat</h2>
+
+            <div class="details-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Start Date</div>
+                    <div class="detail-value">Friday, July 24, 2026</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Duration</div>
+                    <div class="detail-value">12 weeks · 10 to 15 hrs/week</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Format</div>
+                    <div class="detail-value">Live online + weekly hands-on labs</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Level</div>
+                    <div class="detail-value">Beginner to Advanced</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Prerequisites</div>
+                    <div class="detail-value">Just a laptop & internet</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Tuition</div>
+                    <div class="detail-value">Flexible payment plans available</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">ApexStack Cloud</div>
+            <p>Powered by ApexStack Cloud</p>
+            <div class="footer-contact">
+                apexstackcloud.com · (216) 215-1449
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>
